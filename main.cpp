@@ -1,4 +1,8 @@
 #include <iostream>
+#include <SFML/Graphics.hpp>
+#include <SFML/OpenGL.hpp>
+#include <SFML/Window.hpp>
+
 #include "geometry.h"
 
 #define MAP_SIZE 100
@@ -40,7 +44,7 @@ class Box{
         bounds[0] = min; bounds[1] = max;
     }
     bool intersect(const Ray&, double t0, double t1, Vector3D& inter1Point, Vector3D& inter2Point) const;
-    Vector3D bounds[2];
+    Vector3D bounds[2]{};
 };
 
 // Smits’ method
@@ -158,5 +162,29 @@ int main() {
     }
     Ray r = Ray(eyePosition, Vector3D(-2.02, -0.4, 1.92));
     traverseRay(cam,r);
+
+    /* Тестовый sfml-код */
+    sf::Color backgroundColor = sf::Color::Black;
+    sf::RenderWindow window(sf::VideoMode(imageHeight, imageWidth), "lol");
+    sf::Image image;
+    image.create(imageHeight, imageWidth, sf::Color::Black);
+    while (window.isOpen()){
+        sf::Event event{};
+        while (window.pollEvent(event)) {
+            if (event.type == sf::Event::Closed)
+                window.close();
+            if (event.type == sf::Event::KeyPressed)
+                if (event.key.code == sf::Keyboard::Escape)
+                    window.close();
+        }
+        sf::Texture texture;
+        texture.loadFromImage(image);
+        sf::Sprite sprite;
+        sprite.setTexture(texture, true);
+        window.clear(sf::Color::Black);
+        window.draw(sprite);
+        window.display();
+    }
+
     return 0;
 }
