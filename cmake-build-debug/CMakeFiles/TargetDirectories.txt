@@ -1,0 +1,3 @@
+D:/mine/projectVoxels/cmake-build-debug/CMakeFiles/projectVoxels.dir
+D:/mine/projectVoxels/cmake-build-debug/CMakeFiles/edit_cache.dir
+D:/mine/projectVoxels/cmake-build-debug/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,1 @@
+D:/mine/sfml/graphics/lib/libsfml-graphics.a D:/mine/sfml/graphics/lib/libsfml-window.a D:/mine/sfml/graphics/lib/libsfml-system.a C:/Windows/System32/opengl32.dll D:/mine/sfml/graphics/lib/libfreetype.a -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 
