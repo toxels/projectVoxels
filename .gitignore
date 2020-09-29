@@ -4,6 +4,8 @@
 *.lo
 *.o
 *.obj
+*.a
+*.exe
 
 # Precompiled Headers
 *.gch
