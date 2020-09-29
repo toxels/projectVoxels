@@ -15,7 +15,8 @@
 #define imageHeight 100
 #define imageWidth 100
 
-#define BOX_SIZE 8
+#define crossSize 64
+#define BOX_SIZE 4
 
 //#define DEBUG
 
@@ -31,7 +32,7 @@ public:
         angleX = xAng;
         angleY = yAng;
         eyePosition = eye;
-        speed = 5;
+        speed = 1;
     }
 };
 
@@ -140,12 +141,17 @@ bool Box::intersect(const Ray& r, double t0, double t1, Vector3D& inter1Point, V
     }
     return false;
 }
-Vector3D rayOfView(Camera& cam){
+Vector3D buildDirectionOfStraightMove(Camera& cam){
     Vector3D origin = Vector3D(0.,0.,1.);
     Vector3D xRotated = MakeRotationY((cam.angleX) * M_PI / 180.) * Vector3D(1.0, 0.0, 0.0);
     Vector3D result = MakeRotationY((cam.angleX) * M_PI / 180.) * origin;
     result = MakeRotation(-cam.angleY * M_PI / 180., xRotated) * result;
     return result;
+}
+Vector3D buildDirectionOfNotSoStraightMove(Camera& cam){
+    Vector3D viewDirection = buildDirectionOfStraightMove(cam);
+    Vector3D y = Vector3D(0.,1.,0.);
+    return Cross(viewDirection, y);
 }
 Ray computePrimRay(Camera& cam, const int i, const int j){
     Vector3D projectPlaneOrigin = Vector3D(0.,0.,distToViewPort);
@@ -180,12 +186,10 @@ sf::Color traverseRay(int startX, int startY, int startZ, Ray& ray, int deep) {
     while(true){
         if(currentBox.get_x() < 0 || currentBox.get_y() < 0 || currentBox.get_z() < 0 ||
                 currentBox.get_x() >= MAP_SIZE || currentBox.get_y() >= MAP_SIZE || currentBox.get_z() >= MAP_SIZE ||
-                deep > MAP_SIZE * 4)
+                deep > 100)
             return sf::Color::Black;
-
         /* A1 < A2 : точки пересечения луча и бокса */
         Vector3D A1 = Vector3D(), A2 = Vector3D();
-
         if(currentBox.intersect(ray, 0, INFINITY, A1, A2)){
             Vector3D A2_normalized = A2 - currentBox.bounds[0];
             if(abs(A2_normalized.x) < eps)
@@ -202,25 +206,76 @@ sf::Color traverseRay(int startX, int startY, int startZ, Ray& ray, int deep) {
                 currentBox.inc_z();
             /* проверяем бокс на наличие вокселя */
             if(checkWorld(currentBox)) {
-                return sf::Color::White;
+                return sf::Color::Blue;
             }
-#ifdef DEBUG
-        printf("hitBox1: %lf %lf %lf\nhitBox2: %lf %lf %lf\n", A1.x, A1.y, A1.z, A2.x, A2.y, A2.z);
-        printf("New box: (%d, %d, %d)\n\n", nextBox.x, nextBox.y, nextBox.z);
-#endif
         }
         deep++;
     }
 }
+/* копипаста траверс_рея для удаления блоков*/
+bool hitRay(int startX, int startY, int startZ, Ray& ray, int deep, Box& boxToDelete, Box& boxToAdd) {
+    const double eps = 0.000001;
+    Box currentBox = Box(startX, startY, startZ);
+    while(true){
+        if(currentBox.get_x() < 0 || currentBox.get_y() < 0 || currentBox.get_z() < 0 ||
+           currentBox.get_x() >= MAP_SIZE || currentBox.get_y() >= MAP_SIZE || currentBox.get_z() >= MAP_SIZE ||
+           deep > MAP_SIZE)
+            return false;
+        /* A1 < A2 : точки пересечения луча и бокса */
+        Vector3D A1 = Vector3D(), A2 = Vector3D();
+        if(currentBox.intersect(ray, 0, INFINITY, A1, A2)){
+            boxToAdd = currentBox;
+            Vector3D A2_normalized = A2 - currentBox.bounds[0];
+            if(abs(A2_normalized.x) < eps)
+                currentBox.dec_x();
+            if(abs(A2_normalized.y) < eps)
+                currentBox.dec_y();
+            if(abs(A2_normalized.z) < eps)
+                currentBox.dec_z();
+            if(abs(A2_normalized.x - BOX_SIZE) < eps)
+                currentBox.inc_x();
+            if(abs(A2_normalized.y - BOX_SIZE) < eps)
+                currentBox.inc_y();
+            if(abs(A2_normalized.z - BOX_SIZE) < eps)
+                currentBox.inc_z();
+            if(checkWorld(currentBox)) {
+                boxToDelete = currentBox;
+                return true;
+            }
+        }
+        deep++;
+    }
 
+}
+void deleteVoxel(Camera& cam){
+    Ray hit = computePrimRay(cam, imageWidth/2, imageHeight/2);
+    Box boxToDelete = Box(0,0,0), boxToAdd = Box(0,0,0);
+    if(hitRay(static_cast<int>(cam.eyePosition.x / BOX_SIZE),
+              static_cast<int>(cam.eyePosition.y / BOX_SIZE),
+              static_cast<int>(cam.eyePosition.z / BOX_SIZE),
+              hit, 5, boxToDelete, boxToAdd)){
+        world[boxToDelete.get_x()][boxToDelete.get_y()][boxToDelete.get_z()] = 0;
+    }
+
+}
+void addVoxel(Camera &cam){
+    Ray hit = computePrimRay(cam, imageWidth/2, imageHeight/2);
+    Box boxToAdd = Box(0,0,0), boxToDelete = Box(0,0,0);
+    if(hitRay(static_cast<int>(cam.eyePosition.x / BOX_SIZE),
+              static_cast<int>(cam.eyePosition.y / BOX_SIZE),
+              static_cast<int>(cam.eyePosition.z / BOX_SIZE),
+              hit, 5, boxToDelete, boxToAdd)){
+        world[boxToAdd.get_x()][boxToAdd.get_y()][boxToAdd.get_z()] = 1;
+    }
+}
 sf::Color screen[imageHeight][imageWidth];
 int main() {
-    /*for(auto & i : world){
+    for(auto & i : world){
         for(auto & j : i){
             for(int & k : j)
-                k = (rand()%1009 == 0);
+                k = (rand()%2000 == 0);
         }
-    }*/
+    }
 
     world[MAP_SIZE / 2][MAP_SIZE / 2][MAP_SIZE / 2] = 1;
     world[MAP_SIZE / 2 + 1][MAP_SIZE / 2][MAP_SIZE / 2] = 1;
@@ -261,11 +316,16 @@ int main() {
     sf::Image image;
     image.create(imageHeight * 4, imageWidth * 4, sf::Color::Magenta);
     clock_t lastRecompute = clock();
+    uint32_t drawCross = 1;
 
+    sf::Texture crossTexture;
+    if (!crossTexture.loadFromFile("cross.png", sf::IntRect(0, 0, crossSize, crossSize))){
+        fprintf(stderr, "Error with loading cross-file\n");
+    }
     while (window.isOpen()){
         SetCursorPos(window.getPosition().x + imageWidth / 2, window.getPosition().y + imageHeight / 2);
         window.sf::Window::setMouseCursorVisible(false);
-        if(clock() - lastRecompute > 0) {
+        if(clock() - lastRecompute > 5) {
             for (int i = 0; i < imageHeight; i++) {
                 for (int j = 0; j < imageWidth; j++) {
                     Ray currentRay = computePrimRay(cam, i, j);
@@ -288,16 +348,38 @@ int main() {
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
-            if (event.type == sf::Event::KeyPressed)
+            if (event.type == sf::Event::KeyPressed) {
                 if (event.key.code == sf::Keyboard::Escape)
                     window.close();
+                if (event.key.code == sf::Keyboard::V)
+                    drawCross ^= 1;
+            }
+            if (event.type == sf::Event::MouseButtonPressed){
+                if (event.mouseButton.button == sf::Mouse::Left)
+                    deleteVoxel(cam);
+                if (event.mouseButton.button == sf::Mouse::Right)
+                    addVoxel(cam);
+            }
         }
 
-        sf::Texture texture;
-        texture.loadFromImage(image);
-        sf::Sprite sprite;
-        sprite.setTexture(texture, true);
+        sf::Sprite crossSprite;
+        crossSprite.setTexture(crossTexture);
+        crossSprite.setPosition(imageWidth * 4 / 2. - crossSize / 2., imageHeight * 4 / 2. - crossSize / 2.);
 
+        sf::Texture pixelsTexture;
+        pixelsTexture.loadFromImage(image);
+        sf::Sprite pixels;
+        pixels.setTexture(pixelsTexture, true);
+
+        sf::Font font;
+        font.loadFromFile("sansation.ttf");
+        sf::Text text;
+        text.setFont(font);
+        char str[256];
+        sprintf(str, "(%.2lf ; %.2lf ; %.2lf)", cam.eyePosition.x, cam.eyePosition.y, cam.eyePosition.z);
+        text.setString(str);
+        text.setCharacterSize(16);
+        text.setFillColor(sf::Color::Green);
 
         POINT mousexy;
         GetCursorPos(&mousexy);
@@ -306,23 +388,29 @@ int main() {
         cam.angleX += (xt - mousexy.x) / 6.;
         cam.angleY += (yt - mousexy.y) / 6.;
         SetCursorPos(xt,yt);
-
-        Vector3D move = rayOfView(cam);
-
+        if(cam.angleY > 89.)
+            cam.angleY = 89.;
+        if(cam.angleY < -89.)
+            cam.angleY = -89.;
+        Vector3D moveStraight = buildDirectionOfStraightMove(cam);
+        Vector3D moveNotSoStraight = buildDirectionOfNotSoStraightMove(cam);
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-            cam.eyePosition += Normalize(move) * cam.speed;
+            cam.eyePosition += Normalize(moveStraight) * cam.speed;
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-            cam.eyePosition -= Normalize(move) * cam.speed;
-        /*if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
-            cam.eyePosition.x -= 1;
+            cam.eyePosition -= Normalize(moveStraight) * cam.speed;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+            cam.eyePosition += Normalize(moveNotSoStraight) * cam.speed;
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-            cam.eyePosition.x += 1;*/
-
-
-
-
+            cam.eyePosition -= Normalize(moveNotSoStraight) * cam.speed;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift))
+            cam.eyePosition.y += cam.speed;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
+            cam.eyePosition.y -= cam.speed;
         window.clear(sf::Color::Magenta);
-        window.draw(sprite);
+        window.draw(pixels);
+        window.draw(text);
+        if (drawCross)
+            window.draw(crossSprite);
         window.display();
     }
 
