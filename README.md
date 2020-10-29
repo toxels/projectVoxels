@@ -1,1 +1,1 @@
-![alt text](mainImage.jpg "")
+![alt text](logo.jpg "")
