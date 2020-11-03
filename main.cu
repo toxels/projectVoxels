@@ -15,11 +15,8 @@
 // TODO профилировщик
 // TODO тени
 
-//float facingRatio = std::max(0, N.dotProduct(V));
-
 #define M_PI 3.1415
 #define MAP_SIZE 100
-
 
 #define distToViewPort 1.0
 #define Vh 1.0
@@ -321,6 +318,7 @@ void traversePixels(uint3 * screen, Camera * cam, unsigned int * world, double3 
                                           (static_cast<int>(cam->eyePosition.z / BOX_SIZE)), primRay, 0, world, &currBox);
         double3 emptyConst = make_double3(-1.,-1.,-1.);
         if(firstHitDot == emptyConst){
+            /** мы не коснулись ничего = небо */
             color = make_uint3(21,4,133);
         }
         else if(checkWorld(&currBox, world) == 1){
@@ -333,10 +331,46 @@ void traversePixels(uint3 * screen, Camera * cam, unsigned int * world, double3 
             cudaDeviceSynchronize();
             if(firstHitDot.y/BOX_SIZE == MAP_SIZE-10)
                 color = make_uint3(198,42,136);
-            if(!(lastLightHit == firstHitDot))
+            if(!(lastLightHit == firstHitDot)) {
+                /** случай когда точка падения полностью в тени */
                 color = color * 0.3;
+            }
+            else{
+                /** случай когда свет дошел до точки */
+                /** найти на какой грани лежит точка firstHitDot */
+                double3 firstHitDotNormalized = firstHitDot - make_double3(static_cast<int>(firstHitDot.x / BOX_SIZE) * BOX_SIZE,
+                                                                           static_cast<int>(firstHitDot.y / BOX_SIZE) * BOX_SIZE,
+                                                                           static_cast<int>(firstHitDot.z / BOX_SIZE) * BOX_SIZE);
+                double3 normal = make_double3(0,0,0);
+                cudaDeviceSynchronize();
+                if(abs(firstHitDotNormalized.x) < eps)
+                    normal.x = -1.;
+                if(abs(firstHitDotNormalized.y) < eps)
+                    normal.y = -1.;
+                if(abs(firstHitDotNormalized.z) < eps)
+                    normal.z = -1.;
+                if(abs(firstHitDotNormalized.x - BOX_SIZE) < eps)
+                    normal.x = +1.;
+                if(abs(firstHitDotNormalized.y - BOX_SIZE) < eps)
+                    normal.y = +1.;
+                if(abs(firstHitDotNormalized.z - BOX_SIZE) < eps)
+                    normal.z = +1.;
+                double lightIntensity = 0.;
+                double cosx = Dot(normal, shadowRay.direction) / Magnitude(normal) / Magnitude(shadowRay.direction);
+                cosx = cosx*-1.;
+                if(cosx >= 0.)
+                    lightIntensity += cosx;
+                double diffuser = (Magnitude(firstHitDot - *lightSource));
+                /** TODO MAGIC NUMBER, REALLY MAGIC */
+                //cosx = 130000 * cosx / (diffuser * diffuser);
+                if(cosx >= 1.)
+                    cosx = 1.;
+                color = color * cosx;
+                cudaDeviceSynchronize();
+            }
         }
         else{
+            /** куб Света */
             color = make_uint3(255,255,255);
         }
         screen[i * imageWidth + j].x = (static_cast<unsigned char>(color.x));
@@ -448,10 +482,10 @@ int main() {
         world[localLight.x * MAP_SIZE * MAP_SIZE +
               localLight.y * MAP_SIZE +
               localLight.z] = 0;
-        localLight.x = static_cast<int>(20*cos(t)) + MAP_SIZE / 2;
-        localLight.y = static_cast<int>(20*sin(t)) + MAP_SIZE / 2;
+        localLight.x = static_cast<int>(40*cos(t)) + MAP_SIZE / 2;
+        localLight.y = static_cast<int>(40*sin(t)) + MAP_SIZE / 2;
         localLight.z = 10;
-        t += 0.05;
+        t += 0.01;
 
         light->x = localLight.x * BOX_SIZE + BOX_SIZE/2.;
         light->y = localLight.y * BOX_SIZE + BOX_SIZE/2.;
