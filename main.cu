@@ -329,35 +329,6 @@ void traversePixels(uint3 *screen, Camera *cam, unsigned int *world, double3 *li
     double eps = 0.0001;
     // int idx = blockIdx.x * blockDim.x + threadIdx.x;
     Box currBox = Box();
-<<<<<<< Updated upstream
-    for(int idx = index ; idx < imageWidth*imageHeight ; idx += stride){
-        uint3 color = make_uint3(3,196,161);
-        int i = idx / imageWidth;
-        int j = idx % imageWidth;
-        Ray primRay = computePrimRay(cam, i, j);
-        double3 firstHitDot = traverseRay((static_cast<int>(cam->eyePosition.x / BOX_SIZE)),
-                                          (static_cast<int>(cam->eyePosition.y / BOX_SIZE)),
-                                          (static_cast<int>(cam->eyePosition.z / BOX_SIZE)), primRay, 0, world, &currBox);
-        double3 emptyConst = make_double3(-1.,-1.,-1.);
-        if(firstHitDot == emptyConst){
-            color = make_uint3(21,4,133);
-        }
-        else if(checkWorld(&currBox, world) == 1){
-            cudaDeviceSynchronize();
-            double3 dir = firstHitDot - *lightSource;
-            Ray shadowRay = Ray(*lightSource,dir);
-            double3 lastLightHit = traverseRay((static_cast<int>(lightSource->x / BOX_SIZE)),
-                                                (static_cast<int>(lightSource->y / BOX_SIZE)),
-                                                (static_cast<int>(lightSource->z / BOX_SIZE)), shadowRay, 0, world, &currBox);
-            cudaDeviceSynchronize();
-            if(firstHitDot.y/BOX_SIZE == MAP_SIZE-10)
-                color = make_uint3(198,42,136);
-            if(!(lastLightHit == firstHitDot))
-                color = color * 0.3;
-        }
-        else{
-            color = make_uint3(255,255,255);
-=======
 
     uint3 color = make_uint3(3, 196, 161); // красиво
 
@@ -424,7 +395,6 @@ void traversePixels(uint3 *screen, Camera *cam, unsigned int *world, double3 *li
                 cosx = 1.;
             color = color * cosx;
             //cudaDeviceSynchronize();
->>>>>>> Stashed changes
         }
     } else {
         /** куб Валера */
@@ -545,13 +515,10 @@ int main() {
         world[localLight.x * MAP_SIZE * MAP_SIZE +
               localLight.y * MAP_SIZE +
               localLight.z] = 0;
-<<<<<<< Updated upstream
-        localLight.x = static_cast<int>(20*cos(t)) + MAP_SIZE / 2;
-        localLight.y = static_cast<int>(20*sin(t)) + MAP_SIZE / 2;
-=======
+
         localLight.x = static_cast<int>(40 * cos(t)) + MAP_SIZE / 2;
         localLight.y = static_cast<int>(40 * sin(t)) + MAP_SIZE / 2;
->>>>>>> Stashed changes
+
         localLight.z = 10;
         t += 0.05;
 
