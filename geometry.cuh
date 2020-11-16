@@ -118,6 +118,7 @@ __host__ __device__
 inline double3 operator + (const double3 a, const double3 b){
     return (make_double3(a.x+b.x, a.y+b.y, a.z+b.z));
 }
+
 __host__ __device__
 inline double3 operator - (const double3 a, const double3 b){
     return (make_double3(a.x-b.x, a.y-b.y, a.z-b.z));
