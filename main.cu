@@ -219,39 +219,43 @@ unsigned int checkWorld(Box *box, unsigned char *world) {
 /* (x, y, z) - индексы текущего бокса в world */
 __device__
 double3 traverseRay(int startX, int startY, int startZ, Ray &ray, int deep, unsigned char *world, Box *lastBox) {
-    const double eps = 0.000001;
     Box currentBox = Box(startX, startY, startZ);
     ray.direction = Normalize(&ray.direction);
     double3 deltaT;
 
-    //Vec2f rayOrigGrid = rayOrigin - gridMin;
+    double t_x = ((BOX_SIZE - ray.source.x) / ray.direction.x), t_y = ((BOX_SIZE - ray.source.y) / ray.direction.y), t_z = ((BOX_SIZE - ray.source.z) / ray.direction.z) ;
     if (ray.direction.x < 0) {
         deltaT.x = -BOX_SIZE / ray.direction.x;
-        /*t_x = (floor(rayOrigGrid[0] / cellDimension[0]) * cellDimension[0]
-               - rayOrigGrid[0]) / rayDirection[0];*/
+        t_x = (floor(ray.source.x / BOX_SIZE) * BOX_SIZE
+               - ray.source.x) / ray.direction.x;
     }
     else {
         deltaT.x = BOX_SIZE / ray.direction.x;
-        /*t_x = ((floor(rayOrigGrid[0] / cellDimension[0]) + 1) * cellDimension[0]
-               - rayOrigGrid[0]) / rayDirection[0];*/
+        t_x = ((floor(ray.source.x / BOX_SIZE) + 1) * BOX_SIZE
+               - ray.source.x) / ray.direction.x;
     }
 
     if (ray.direction.y < 0) {
         deltaT.y = -BOX_SIZE / ray.direction.y;
+        t_y = (floor(ray.source.y / BOX_SIZE) * BOX_SIZE
+               - ray.source.y) / ray.direction.y;
     }
     else {
         deltaT.y = BOX_SIZE / ray.direction.y;
+        t_y = ((floor(ray.source.y / BOX_SIZE) + 1) * BOX_SIZE
+               - ray.source.y) / ray.direction.y;
     }
 
     if (ray.direction.z < 0) {
         deltaT.z = -BOX_SIZE / ray.direction.z;
+        t_z = (floor(ray.source.z / BOX_SIZE) * BOX_SIZE
+               - ray.source.z) / ray.direction.z;
     }
     else {
         deltaT.z = BOX_SIZE / ray.direction.z;
+        t_z = ((floor(ray.source.z / BOX_SIZE) + 1) * BOX_SIZE
+               - ray.source.z) / ray.direction.z;
     }
-
-    float t_x = deltaT.x, t_y = deltaT.y, t_z = deltaT.z ;
-
     while (true) {
         if (currentBox.get_x() < 0 || currentBox.get_y() < 0 || currentBox.get_z() < 0 ||
             currentBox.get_x() >= MAP_SIZE || currentBox.get_y() >= MAP_SIZE || currentBox.get_z() >= MAP_SIZE /*||
@@ -260,27 +264,7 @@ double3 traverseRay(int startX, int startY, int startZ, Ray &ray, int deep, unsi
             return make_double3(-1., -1., -1.);
         }
         double t = 0.;
-        /* A1 < A2 : точки пересечения луча и бокса */
-        double3 A1 = double3(), A2 = double3();
-        /*if (currentBox.intersect(ray, 0, INFINITY, A1, A2)) {
-            double3 A2_normalized = A2 - currentBox.bounds[0];
-            if (abs(A2_normalized.x) < eps)
-                currentBox.dec_x();
-            if (abs(A2_normalized.y) < eps)
-                currentBox.dec_y();
-            if (abs(A2_normalized.z) < eps)
-                currentBox.dec_z();
-            if (abs(A2_normalized.x - BOX_SIZE) < eps)
-                currentBox.inc_x();
-            if (abs(A2_normalized.y - BOX_SIZE) < eps)
-                currentBox.inc_y();
-            if (abs(A2_normalized.z - BOX_SIZE) < eps)
-                currentBox.inc_z();
-            if (checkWorld(&currentBox, world)) {
-                *lastBox = currentBox;
-                return A2;
-            }
-        }*/
+
         if (t_x < t_y) {
             if (t_x < t_z) {
                 t = t_x;
@@ -398,7 +382,7 @@ void traversePixels(uint3 *screen, Camera *cam, unsigned char *world, double3 *l
     __shared__ Camera sharedCam;
     __shared__ double3 firstHitDotsNormalized[512];
     sharedCam = *cam;
-    double eps = 0.0001;
+    double eps = 0.000001;
     // int idx = blockIdx.x * blockDim.x + threadIdx.x;
     Box currBox = Box();
 
@@ -412,8 +396,8 @@ void traversePixels(uint3 *screen, Camera *cam, unsigned char *world, double3 *l
 
     Ray primRay = computePrimRay(cam, i, j);
     firstHitDots[linearThreadIdxInBlock] = traverseRay((static_cast<int>(sharedCam.eyePosition.x / BOX_SIZE)),
-                                            (static_cast<int>(sharedCam.eyePosition.y / BOX_SIZE)),
-                                            (static_cast<int>(sharedCam.eyePosition.z / BOX_SIZE)), primRay, 0, world, &currBox);
+                                                       (static_cast<int>(sharedCam.eyePosition.y / BOX_SIZE)),
+                                                       (static_cast<int>(sharedCam.eyePosition.z / BOX_SIZE)), primRay, 0, world, &currBox);
     double3 emptyConst = make_double3(-1., -1., -1.);
     if (firstHitDots[linearThreadIdxInBlock] == emptyConst) {
         /** мы не коснулись ничего = небо */
@@ -429,8 +413,9 @@ void traversePixels(uint3 *screen, Camera *cam, unsigned char *world, double3 *l
                                            (static_cast<int>(lightSource->z / BOX_SIZE)), shadowRay, 0, world,
                                            &currBox);
         cudaDeviceSynchronize();
-        if (firstHitDots[linearThreadIdxInBlock].y / BOX_SIZE == MAP_SIZE - 10)
-            color = make_uint3(198, 42, 136);
+        /*if (firstHitDots[linearThreadIdxInBlock].y / BOX_SIZE == MAP_SIZE - 10)
+            color = make_uint3(198, 42, 136);*/
+        //cudaDeviceSynchronize();
         if (!(lastLightHit == firstHitDots[linearThreadIdxInBlock])) {
             /** случай когда точка падения полностью в тени */
             color = color * 0.3;
@@ -458,14 +443,15 @@ void traversePixels(uint3 *screen, Camera *cam, unsigned char *world, double3 *l
             double lightIntensity = 0.2;
             double cosx = Dot(normal, shadowRay.direction) / Magnitude(normal) / Magnitude(shadowRay.direction);
             cosx = cosx * -1.;
-            if (cosx >= 0.)
-                lightIntensity += cosx;
+            /*if (cosx >= 0.)
+                lightIntensity += cosx;*/
             double diffuser = (Magnitude(firstHitDots[linearThreadIdxInBlock] - *lightSource));
             /** TODO MAGIC NUMBER, REALLY MAGIC */
             //cosx = 130000 * cosx / (diffuser * diffuser);
-            if (cosx >= 1.)
-                cosx = 1.;
-            color = color * cosx;
+           /* if (cosx >= 1.)
+                cosx = 1.;*/
+           /*if(cosx > 0)
+                color = color * cosx;*/
             //cudaDeviceSynchronize();
         }
     } else {
@@ -583,7 +569,7 @@ int main() {
     localLight.y = static_cast<int>(10 * sin(t)) + MAP_SIZE / 2;
     localLight.z = 10;
 
-    while (frames++ < MAX_FRAMES && window.isOpen()) {
+    while (/*frames++ < MAX_FRAMES &&*/ window.isOpen()) {
         world[localLight.x * MAP_SIZE * MAP_SIZE +
               localLight.y * MAP_SIZE +
               localLight.z] = 0;
