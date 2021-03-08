@@ -382,7 +382,7 @@ void traversePixels(uint3 *screen, Camera *cam, unsigned char *world, double3 *l
     __shared__ Camera sharedCam;
     __shared__ double3 firstHitDotsNormalized[512];
     sharedCam = *cam;
-    double eps = 0.000001;
+    double eps = 0.0000001;
     // int idx = blockIdx.x * blockDim.x + threadIdx.x;
     Box currBox = Box();
 
@@ -404,7 +404,7 @@ void traversePixels(uint3 *screen, Camera *cam, unsigned char *world, double3 *l
         color = make_uint3(21, 4, 133);
     } else if (checkWorld(&currBox, world) == 1) {
         __syncthreads();
-        double3 dir = firstHitDots[linearThreadIdxInBlock] - *lightSource;
+        double3 dir =  firstHitDots[linearThreadIdxInBlock] - *lightSource;
         Ray shadowRay;
         shadowRay.source = *lightSource;
         shadowRay.direction = dir;
@@ -418,40 +418,41 @@ void traversePixels(uint3 *screen, Camera *cam, unsigned char *world, double3 *l
         //cudaDeviceSynchronize();
         if (!(lastLightHit == firstHitDots[linearThreadIdxInBlock])) {
             /** случай когда точка падения полностью в тени */
-            color = color * 0.3;
+            color = color * 0.2;
         } else {
             /** случай когда свет дошел до точки */
             /** найти на какой грани лежит точка firstHitDot */
             firstHitDotsNormalized[linearThreadIdxInBlock] =
-                    firstHitDots[linearThreadIdxInBlock] - make_double3(static_cast<int>(firstHitDots[linearThreadIdxInBlock].x / BOX_SIZE) * BOX_SIZE,
-                                                                        static_cast<int>(firstHitDots[linearThreadIdxInBlock].y / BOX_SIZE) * BOX_SIZE,
-                                                                        static_cast<int>(firstHitDots[linearThreadIdxInBlock].z / BOX_SIZE) * BOX_SIZE);
-            double3 normal = make_double3(0, 0, 0);
+                firstHitDots[linearThreadIdxInBlock] - make_double3(round(firstHitDots[linearThreadIdxInBlock].x / BOX_SIZE.) * BOX_SIZE,
+                                                                    round(firstHitDots[linearThreadIdxInBlock].y / BOX_SIZE.) * BOX_SIZE,
+                                                                    round(firstHitDots[linearThreadIdxInBlock].z / BOX_SIZE.) * BOX_SIZE);
+            double3 normal = make_double3(0., 0., 0.);
             //cudaDeviceSynchronize();
             if (abs(firstHitDotsNormalized[linearThreadIdxInBlock].x) < eps)
                 normal.x = -1.;
-            if (abs(firstHitDotsNormalized[linearThreadIdxInBlock].y) < eps)
-                normal.y = -1.;
-            if (abs(firstHitDotsNormalized[linearThreadIdxInBlock].z) < eps)
-                normal.z = -1.;
             if (abs(firstHitDotsNormalized[linearThreadIdxInBlock].x - BOX_SIZE) < eps)
                 normal.x = +1.;
+            if (abs(firstHitDotsNormalized[linearThreadIdxInBlock].y) < eps)
+                normal.y = -1.;
             if (abs(firstHitDotsNormalized[linearThreadIdxInBlock].y - BOX_SIZE) < eps)
                 normal.y = +1.;
+            if (abs(firstHitDotsNormalized[linearThreadIdxInBlock].z) < eps)
+                normal.z = -1.;
             if (abs(firstHitDotsNormalized[linearThreadIdxInBlock].z - BOX_SIZE) < eps)
                 normal.z = +1.;
             double lightIntensity = 0.2;
-            double cosx = Dot(normal, shadowRay.direction) / Magnitude(normal) / Magnitude(shadowRay.direction);
-            cosx = cosx * -1.;
-            /*if (cosx >= 0.)
-                lightIntensity += cosx;*/
+            double cosx = Dot(normal, shadowRay.direction * -1.) / Magnitude(normal) / Magnitude(shadowRay.direction);
+
             double diffuser = (Magnitude(firstHitDots[linearThreadIdxInBlock] - *lightSource));
-            /** TODO MAGIC NUMBER, REALLY MAGIC */
-            //cosx = 130000 * cosx / (diffuser * diffuser);
-           /* if (cosx >= 1.)
-                cosx = 1.;*/
-           /*if(cosx > 0)
-                color = color * cosx;*/
+            cosx = 130000 * cosx / (diffuser * diffuser);
+
+            if (cosx >= eps)
+                lightIntensity += cosx;
+            
+            
+            if (lightIntensity > 1.)
+                lightIntensity = 1.0;
+            color = color * lightIntensity;
             //cudaDeviceSynchronize();
         }
     } else {
@@ -467,9 +468,11 @@ void traversePixels(uint3 *screen, Camera *cam, unsigned char *world, double3 *l
     screen[idx].z = temp[linearThreadIdxInBlock].z;
 
 }
-
+/*
+std::chrono::milliseconds start_time;
+__host__ __device__
 void generateMap(unsigned int *world) {
-    /*static double t1 = 0.001, t2 = 0.001;
+    static double t1 = 0.001, t2 = 0.001;
     std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()
     ) - start_time;
@@ -489,11 +492,12 @@ void generateMap(unsigned int *world) {
         world[idx] = 1;
         t2 += 0.05;
     }
-    t1 += 0.05;*/
-    for (int i = 0; i < MAP_SIZE * MAP_SIZE * MAP_SIZE; i++)
-        world[i] = (rand() % 1000 == 0);
+    t1 += 0.05;
+    //for (int i = 0; i < MAP_SIZE * MAP_SIZE * MAP_SIZE; i++)
+    //    world[i] = (rand() % 1000 == 0);
+    
 }
-
+*/
 bool bounds(double3 pos) {
     if (pos.x >= (MAP_SIZE - 1) * BOX_SIZE || pos.y >= (MAP_SIZE - 1) * BOX_SIZE ||
         pos.z >= ((MAP_SIZE - 1) * BOX_SIZE) || pos.x <= 0 || pos.y <= 0 || pos.z <= 0)
@@ -508,8 +512,11 @@ void printDebug(Camera *cam) {
 }
 
 int main() {
-    int frames = 0;
 
+
+    //start_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+    int frames = 0;
+    std::cout << "I'm gay!" << std::endl;
     float sumScreenRenderTime = 0.0;
 
     unsigned char *world;
@@ -570,6 +577,9 @@ int main() {
     localLight.z = 10;
 
     while (/*frames++ < MAX_FRAMES &&*/ window.isOpen()) {
+
+    
+
         world[localLight.x * MAP_SIZE * MAP_SIZE +
               localLight.y * MAP_SIZE +
               localLight.z] = 0;
