@@ -23,7 +23,12 @@ struct voxel {
     }
     __host__ __device__
     void setLight() {
-        properties &= 0b00000010;
+        properties |= 0b00000010;
+        setActive();
+    }
+    __host__ __device__
+    bool isLight() {
+        return static_cast<bool>(properties & 0b00000010);
     }
 };
 __global__ void iHateMyLife(voxel * thing) {

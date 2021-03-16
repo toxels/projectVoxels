@@ -4,135 +4,12 @@
 #include <SFML/Window.hpp>
 #include <winuser.h>
 #include <Windows.h>
-#include "geometry.cuh"
-#include "voxel.cuh"
 #include <vector>
 #include <fstream>
 
-/*
-#ifdef _WIN32
-#include <GL/gl.h>
-#include <GL/glu.h>
-#endif
-
-typedef union PixelInfo
-{
-    std::uint32_t Colour;
-    struct
-    {
-        std::uint8_t R, G, B, A;
-    };
-} *PPixelInfo;
-
-class Tga
-{
-private:
-    std::vector<std::uint8_t> Pixels;
-    bool ImageCompressed;
-    std::uint32_t width, height, size, BitsPerPixel;
-
-public:
-    Tga(const char* FilePath);
-    std::vector<std::uint8_t> GetPixels() {return this->Pixels;}
-    std::uint32_t GetWidth() const {return this->width;}
-    std::uint32_t GetHeight() const {return this->height;}
-    bool HasAlphaChannel() {return BitsPerPixel == 32;}
-};
-
-Tga::Tga(const char* FilePath)
-{
-    std::fstream hFile(FilePath, std::ios::in | std::ios::binary);
-    if (!hFile.is_open()){throw std::invalid_argument("File Not Found.");}
-
-    std::uint8_t Header[18] = {0};
-    std::vector<std::uint8_t> ImageData;
-    static std::uint8_t DeCompressed[12] = {0x0, 0x0, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
-    static std::uint8_t IsCompressed[12] = {0x0, 0x0, 0xA, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
-
-    hFile.read(reinterpret_cast<char*>(&Header), sizeof(Header));
-
-    if (!std::memcmp(DeCompressed, &Header, sizeof(DeCompressed)))
-    {
-        BitsPerPixel = Header[16];
-        width  = Header[13] * 256 + Header[12];
-        height = Header[15] * 256 + Header[14];
-        size  = ((width * BitsPerPixel + 31) / 32) * 4 * height;
-
-        if ((BitsPerPixel != 24) && (BitsPerPixel != 32))
-        {
-            hFile.close();
-            throw std::invalid_argument("Invalid File Format. Required: 24 or 32 Bit Image.");
-        }
-
-        ImageData.resize(size);
-        ImageCompressed = false;
-        hFile.read(reinterpret_cast<char*>(ImageData.data()), size);
-    }
-    else if (!std::memcmp(IsCompressed, &Header, sizeof(IsCompressed)))
-    {
-        BitsPerPixel = Header[16];
-        width  = Header[13] * 256 + Header[12];
-        height = Header[15] * 256 + Header[14];
-        size  = ((width * BitsPerPixel + 31) / 32) * 4 * height;
-
-        if ((BitsPerPixel != 24) && (BitsPerPixel != 32))
-        {
-            hFile.close();
-            throw std::invalid_argument("Invalid File Format. Required: 24 or 32 Bit Image.");
-        }
-
-        PixelInfo Pixel = {0};
-        int CurrentByte = 0;
-        std::size_t CurrentPixel = 0;
-        ImageCompressed = true;
-        std::uint8_t ChunkHeader = {0};
-        int BytesPerPixel = (BitsPerPixel / 8);
-        ImageData.resize(width * height * sizeof(PixelInfo));
-
-        do
-        {
-            hFile.read(reinterpret_cast<char*>(&ChunkHeader), sizeof(ChunkHeader));
-
-            if(ChunkHeader < 128)
-            {
-                ++ChunkHeader;
-                for(int I = 0; I < ChunkHeader; ++I, ++CurrentPixel)
-                {
-                    hFile.read(reinterpret_cast<char*>(&Pixel), BytesPerPixel);
-
-                    ImageData[CurrentByte++] = Pixel.B;
-                    ImageData[CurrentByte++] = Pixel.G;
-                    ImageData[CurrentByte++] = Pixel.R;
-                    if (BitsPerPixel > 24) ImageData[CurrentByte++] = Pixel.A;
-                }
-            }
-            else
-            {
-                ChunkHeader -= 127;
-                hFile.read(reinterpret_cast<char*>(&Pixel), BytesPerPixel);
-
-                for(int I = 0; I < ChunkHeader; ++I, ++CurrentPixel)
-                {
-                    ImageData[CurrentByte++] = Pixel.B;
-                    ImageData[CurrentByte++] = Pixel.G;
-                    ImageData[CurrentByte++] = Pixel.R;
-                    if (BitsPerPixel > 24) ImageData[CurrentByte++] = Pixel.A;
-                }
-            }
-        } while(CurrentPixel < (width * height));
-    }
-    else
-    {
-        hFile.close();
-        throw std::invalid_argument("Invalid File Format. Required: 24 or 32 Bit TGA File.");
-    }
-
-    hFile.close();
-    this->Pixels = ImageData;
-}
-*/
-
-
+#include "geometry.cuh"
+#include "voxel.cuh"
+#include "tga.cuh"
 // TODO нормальные __host__ __device__
 // TODO сделать класс углов || взять из готовой (cuBLAS??)
 // TODO текстуры + шрифт
@@ -140,21 +17,21 @@ Tga::Tga(const char* FilePath)
 // TODO переписать сообщения об ошибках на cuda error
 
 
-#define M_PI 3.1415
-#define MAP_SIZE 200
+#define M_PI (3.1415)
+#define MAP_SIZE (200)
 
 
-#define distToViewPort 1.0
-#define Vh 1.0
-#define Vw 1.0
+#define distToViewPort (1.0)
+#define Vh (1.0)
+#define Vw (1.0)
 
-#define imageHeight 1024
-#define imageWidth 1024
+#define imageHeight (1024)
+#define imageWidth (1024)
 
-#define crossSize 64
-#define BOX_SIZE 4
+#define crossSize (64)
+#define BOX_SIZE (4)
 
-#define MAX_FRAMES 1000
+#define MAX_FRAMES (1000)
 //#define DEBUG
 
 
@@ -380,8 +257,7 @@ double3 traverseRay(int startX, int startY, int startZ, Ray &ray, int deep, voxe
     }
     while (true) {
         if (currentBox.get_x() < 0 || currentBox.get_y() < 0 || currentBox.get_z() < 0 ||
-            currentBox.get_x() >= MAP_SIZE || currentBox.get_y() >= MAP_SIZE || currentBox.get_z() >= MAP_SIZE /*||
-            deep > MAP_SIZE * 2*/) {
+            currentBox.get_x() >= MAP_SIZE || currentBox.get_y() >= MAP_SIZE || currentBox.get_z() >= MAP_SIZE /*|| deep > MAP_SIZE * 2*/) {
             *lastBox = Box(-1, -1, -1);
             return make_double3(-1., -1., -1.);
         }
@@ -511,7 +387,6 @@ void traversePixels(uint3 *screen, Camera *cam, voxel* world, double3 *lightSour
     __shared__ double3 firstHitDotsNormalized[512];
     sharedCam = *cam;
     double eps = 0.0000001;
-    // int idx = blockIdx.x * blockDim.x + threadIdx.x;
     Box currBox = Box();
 
     uchar3 color;
@@ -530,7 +405,7 @@ void traversePixels(uint3 *screen, Camera *cam, voxel* world, double3 *lightSour
     if (firstHitDots[linearThreadIdxInBlock] == emptyConst) {
         /** мы не коснулись ничего = небо */
         color = make_uchar3(21, 4, 133);
-    } else if (checkWorld(&currBox, world) == 1) {
+    } else if (checkWorld(&currBox, world) && !world[currBox.get_x() * MAP_SIZE * MAP_SIZE + currBox.get_y() * MAP_SIZE + currBox.get_z()].isLight()) {
         __syncthreads();
         int3 coordinatesOfVoxel = make_int3(currBox.get_x(), currBox.get_y(), currBox.get_z());
         color = world[coordinatesOfVoxel.x * MAP_SIZE * MAP_SIZE + coordinatesOfVoxel.y * MAP_SIZE + coordinatesOfVoxel.z].color;
@@ -543,9 +418,6 @@ void traversePixels(uint3 *screen, Camera *cam, voxel* world, double3 *lightSour
                                            (static_cast<int>(lightSource->z / BOX_SIZE)), shadowRay, 0, world,
                                            &currBox);
         cudaDeviceSynchronize();
-        /*if (firstHitDots[linearThreadIdxInBlock].y / BOX_SIZE == MAP_SIZE - 10)
-            color = make_uint3(198, 42, 136);*/
-        //cudaDeviceSynchronize();
         if (!(lastLightHit == firstHitDots[linearThreadIdxInBlock])) {
             /** случай когда точка падения полностью в тени */
             color = color * 0.2;
@@ -553,9 +425,9 @@ void traversePixels(uint3 *screen, Camera *cam, voxel* world, double3 *lightSour
             /** случай когда свет дошел до точки */
             /** найти на какой грани лежит точка firstHitDot */
             firstHitDotsNormalized[linearThreadIdxInBlock] =
-                firstHitDots[linearThreadIdxInBlock] - make_double3(round(firstHitDots[linearThreadIdxInBlock].x / BOX_SIZE.) * BOX_SIZE,
-                                                                    round(firstHitDots[linearThreadIdxInBlock].y / BOX_SIZE.) * BOX_SIZE,
-                                                                    round(firstHitDots[linearThreadIdxInBlock].z / BOX_SIZE.) * BOX_SIZE);
+                firstHitDots[linearThreadIdxInBlock] - make_double3(currBox.get_x() * BOX_SIZE,
+                                                                    currBox.get_y() * BOX_SIZE,
+                                                                    currBox.get_z() * BOX_SIZE);
             double3 normal = make_double3(0., 0., 0.);
             //cudaDeviceSynchronize();
             if (abs(firstHitDotsNormalized[linearThreadIdxInBlock].x) < eps)
@@ -573,11 +445,11 @@ void traversePixels(uint3 *screen, Camera *cam, voxel* world, double3 *lightSour
             double lightIntensity = 0.2;
             double cosx = Dot(normal, shadowRay.direction * -1.) / Magnitude(normal) / Magnitude(shadowRay.direction);
 
-            double diffuser = (Magnitude(firstHitDots[linearThreadIdxInBlock] - *lightSource));
+            //double diffuser = (Magnitude(firstHitDots[linearThreadIdxInBlock] - *lightSource));
             //cosx = 130000 * cosx / (diffuser * diffuser);
 
             if (cosx >= eps)
-                lightIntensity += cosx;
+                lightIntensity += cosx * 0.8;
 
 
             if (lightIntensity > 1.)
@@ -598,36 +470,6 @@ void traversePixels(uint3 *screen, Camera *cam, voxel* world, double3 *lightSour
     screen[idx].z = temp[linearThreadIdxInBlock].z;
 
 }
-/*
-std::chrono::milliseconds start_time;
-__host__ __device__
-void generateMap(unsigned int *world) {
-    static double t1 = 0.001, t2 = 0.001;
-    std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()
-    ) - start_time;
-    double delta = M_PI;
-    int x1 = static_cast<int>(10*cos(t1)) + MAP_SIZE / 2;
-    int z1 = static_cast<int>(10*sin(t1)) + MAP_SIZE / 2;
-    int y1 = static_cast<int>(t1*3.) + BOX_SIZE * 2;
-    int x2 = static_cast<int>(10*cos(-t2-delta)) + MAP_SIZE / 2;
-    int z2 = static_cast<int>(10*sin(-t2-delta)) + MAP_SIZE / 2;
-    int y2 = static_cast<int>(t2*5.) + BOX_SIZE * 2;
-    if((x1 >= MAP_SIZE || y1 >= MAP_SIZE || z1 >= MAP_SIZE) || (x2 >= MAP_SIZE || y2 >= MAP_SIZE || z2 >= MAP_SIZE))
-        return;
-    int idx = x1 * MAP_SIZE * MAP_SIZE + y1 * MAP_SIZE + z1;
-    world[idx] = 1;
-    idx = x2 * MAP_SIZE * MAP_SIZE + y2 * MAP_SIZE + z2;
-    if(t1 > delta) {
-        world[idx] = 1;
-        t2 += 0.05;
-    }
-    t1 += 0.05;
-    //for (int i = 0; i < MAP_SIZE * MAP_SIZE * MAP_SIZE; i++)
-    //    world[i] = (rand() % 1000 == 0);
-
-}
-*/
 bool bounds(double3 pos) {
     if (pos.x >= (MAP_SIZE - 1) * BOX_SIZE || pos.y >= (MAP_SIZE - 1) * BOX_SIZE ||
         pos.z >= ((MAP_SIZE - 1) * BOX_SIZE) || pos.x <= 0 || pos.y <= 0 || pos.z <= 0)
@@ -643,15 +485,17 @@ void printDebug(Camera *cam) {
 
 int main() {
 
-    /*
-    Tga info = Tga("C:/Users/...../Desktop/SomeTGA.tga");
+    unsigned char* heightMap = NULL;
+    int heightMapWidth, heightMapHeight, heightMapChannels;
+    LoadTGA("heightmap.tga", heightMap, heightMapWidth, heightMapHeight, heightMapChannels);
 
-    GLuint texture = 0;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, info.HasAlphaChannel() ? GL_RGBA : GL_RGB, info.GetWidth(), info.GetWidth(), 0, info.HasAlphaChannel() ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, info.GetPixels().data());
+    unsigned char* photoTga = NULL;
+    int photoTgaWidth, photoTgaHeight, photoTgaChannels;
+    LoadTGA("shlepa.tga", photoTga, photoTgaWidth, photoTgaHeight, photoTgaChannels);
 
-    */
+
+
+
     int frames = 0;
     float sumScreenRenderTime = 0.0;
 
@@ -671,7 +515,8 @@ int main() {
     auto *hostScreen = static_cast<uint3 *>(malloc(imageHeight * imageWidth * sizeof(uint3)));
 
     int blocksCnt = 0;
-    for (int i = 0; i < MAP_SIZE * MAP_SIZE * MAP_SIZE; i++) {
+    // MAP GENERATION
+    /*for (int i = 0; i < MAP_SIZE * MAP_SIZE * MAP_SIZE; i++) {
         int x, y, z;
         x = i / MAP_SIZE / MAP_SIZE;
         y = i / MAP_SIZE % MAP_SIZE;
@@ -686,9 +531,38 @@ int main() {
             world[i].setColor(0, 255, 0);
         }
         blocksCnt += world[i].isActive();
+    }*/
+    std::cout << "heightMapChannels: " << heightMapChannels << std::endl;
+    for (int i = 0; i < heightMapHeight; i++) {
+        for (int j = 0; j < heightMapWidth; j++) {
+            int x = i;
+            int y = MAP_SIZE - ((heightMap[i * heightMapWidth + j]) * (MAP_SIZE / 2)) / (256 * 3);
+            int z = j;
+            for (; y < MAP_SIZE; y++) {
+                int idx = x * MAP_SIZE * MAP_SIZE + y * MAP_SIZE + z;
+                world[idx].setActive();
+                if (y > MAP_SIZE - 20)
+                    world[idx].setColor(19, 133, 16);
+                else
+                    world[idx].setColor(240, 240, 240);
+            }
+        }
+    }
+    std::cout << "photoTgaChannels: " << photoTgaChannels << std::endl;
+    std::cout << "photoTgaHeight: " << photoTgaHeight << std::endl;
+    std::cout << "photoTgaWidth: " << photoTgaWidth << std::endl;
+    for (int i = 0; i < photoTgaHeight; i++) {
+        for (int j = 0; j < photoTgaWidth; j++) {
+            int x = j;
+            int y = 0;
+            int z = i;
+            int idx = x * MAP_SIZE * MAP_SIZE + y * MAP_SIZE + z;
+            world[idx].setActive();
+            world[idx].setColor(photoTga[i*3 * photoTgaWidth + j*3], photoTga[i*3 * photoTgaWidth + j*3 + 1], photoTga[i*3 * photoTgaWidth + j*3 + 2]);
+        }
     }
     cudaDeviceSynchronize();
-    printf("Num of voxels: %d\n", blocksCnt);
+    //std::cout << "Num of active voxels: " << blocksCnt << "\n";
     double3 eyePosition = make_double3(64.636510, 1.0, 294.136342);
     cam->eyePosition = eyePosition;
     cam->angleX = 234.833333;
@@ -714,20 +588,20 @@ int main() {
     cudaMallocManaged(&moveNotStraight, sizeof(double3));
 
     double t = 0.0;
-    localLight.x = static_cast<int>(10 * cos(t)) + MAP_SIZE / 2;
-    localLight.y = static_cast<int>(10 * sin(t)) + MAP_SIZE / 2;
-    localLight.z = 10;
+    localLight.x = static_cast<int>(40 * cos(t)) + MAP_SIZE / 2;
+    localLight.y = MAP_SIZE / 2;
+    localLight.z = static_cast<int>(40 * sin(t)) + MAP_SIZE / 2;
 
     while (window.isOpen()) {
-
+        frames++;
 
 
         world[localLight.x * MAP_SIZE * MAP_SIZE + localLight.y * MAP_SIZE + localLight.z].setInactive();
 
         localLight.x = static_cast<int>(40 * cos(t)) + MAP_SIZE / 2;
-        localLight.y = static_cast<int>(40 * sin(t)) + MAP_SIZE / 2;
+        localLight.z = static_cast<int>(40 * sin(t)) + MAP_SIZE / 2;
 
-        localLight.z = 10;
+        localLight.y = MAP_SIZE / 2;
         t += 0.05;
 
         light->x = localLight.x * BOX_SIZE + BOX_SIZE / 2.;
@@ -858,6 +732,6 @@ int main() {
     cudaFree(cam);
     std::cout << "frames: " << frames-1 << std::endl;
     std::cout << "sumScreenRenderTime: " << sumScreenRenderTime << std::endl;
-
+    std::cout << "average fps: " << (frames - 1) * 1000 / sumScreenRenderTime << "\n";
     return 0;
 }

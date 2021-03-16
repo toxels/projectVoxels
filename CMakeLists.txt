@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.17)
 project(voxelsWithCuda CUDA)
-
 set(CMAKE_CUDA_STANDARD 14)
 set(CMAKE_CXX_STANDARD 14)
 
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-add_executable(voxelsWithCuda main.cu rayCast.cu geometry.cuh)
+#include_directories(${PROJECT_SOURCE_DIR})
+add_executable(voxelsWithCuda rayCast.cu geometry.cuh tga.h tga_by_nvidia.cu tga.cuh main.cu)
 set_target_properties(voxelsWithCuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 
@@ -17,10 +17,11 @@ find_library(SFML-WINDOW sfml-window graphics/lib)
 find_library(SFML-SYSTEM sfml-system graphics/lib)
 find_library(SFML-MAIN sfml-main graphics/lib)
 find_library(FREETYPE freetype graphics/lib)
-
-
+find_library(FREEGLUT freeglut graphics/lib)
+message(${FREEGLUT})
 target_link_libraries(voxelsWithCuda LINK_PUBLIC ${SFML-GRAPHICS})
 target_link_libraries(voxelsWithCuda LINK_PUBLIC ${SFML-WINDOW})
 target_link_libraries(voxelsWithCuda LINK_PUBLIC ${SFML-SYSTEM})
 target_link_libraries(voxelsWithCuda LINK_PUBLIC ${SFML-MAIN})
 target_link_libraries(voxelsWithCuda LINK_PUBLIC ${FREETYPE})
+target_link_libraries(voxelsWithCuda LINK_PUBLIC ${FREEGLUT})
