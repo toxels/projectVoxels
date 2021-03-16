@@ -85,6 +85,10 @@ inline uint3 operator * (const uint3 v, double s){
     return (make_uint3(v.x * s, v.y * s, v.z * s));
 }
 __host__ __device__
+inline uchar3 operator * (const uchar3 v, double s){
+    return (make_uchar3(v.x * s, v.y * s, v.z * s));
+}
+__host__ __device__
 double myAbs(double a){
     return a > 0.0 ? a : -1 * a;
 }
@@ -118,6 +122,7 @@ __host__ __device__
 inline double3 operator + (const double3 a, const double3 b){
     return (make_double3(a.x+b.x, a.y+b.y, a.z+b.z));
 }
+
 __host__ __device__
 inline double3 operator - (const double3 a, const double3 b){
     return (make_double3(a.x-b.x, a.y-b.y, a.z-b.z));

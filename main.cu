@@ -5,35 +5,157 @@
 #include <winuser.h>
 #include <Windows.h>
 #include "geometry.cuh"
-#include <chrono>
+#include "voxel.cuh"
+#include <vector>
+#include <fstream>
+
+/*
+#ifdef _WIN32
+#include <GL/gl.h>
+#include <GL/glu.h>
+#endif
+
+typedef union PixelInfo
+{
+    std::uint32_t Colour;
+    struct
+    {
+        std::uint8_t R, G, B, A;
+    };
+} *PPixelInfo;
+
+class Tga
+{
+private:
+    std::vector<std::uint8_t> Pixels;
+    bool ImageCompressed;
+    std::uint32_t width, height, size, BitsPerPixel;
+
+public:
+    Tga(const char* FilePath);
+    std::vector<std::uint8_t> GetPixels() {return this->Pixels;}
+    std::uint32_t GetWidth() const {return this->width;}
+    std::uint32_t GetHeight() const {return this->height;}
+    bool HasAlphaChannel() {return BitsPerPixel == 32;}
+};
+
+Tga::Tga(const char* FilePath)
+{
+    std::fstream hFile(FilePath, std::ios::in | std::ios::binary);
+    if (!hFile.is_open()){throw std::invalid_argument("File Not Found.");}
+
+    std::uint8_t Header[18] = {0};
+    std::vector<std::uint8_t> ImageData;
+    static std::uint8_t DeCompressed[12] = {0x0, 0x0, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+    static std::uint8_t IsCompressed[12] = {0x0, 0x0, 0xA, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+
+    hFile.read(reinterpret_cast<char*>(&Header), sizeof(Header));
+
+    if (!std::memcmp(DeCompressed, &Header, sizeof(DeCompressed)))
+    {
+        BitsPerPixel = Header[16];
+        width  = Header[13] * 256 + Header[12];
+        height = Header[15] * 256 + Header[14];
+        size  = ((width * BitsPerPixel + 31) / 32) * 4 * height;
+
+        if ((BitsPerPixel != 24) && (BitsPerPixel != 32))
+        {
+            hFile.close();
+            throw std::invalid_argument("Invalid File Format. Required: 24 or 32 Bit Image.");
+        }
+
+        ImageData.resize(size);
+        ImageCompressed = false;
+        hFile.read(reinterpret_cast<char*>(ImageData.data()), size);
+    }
+    else if (!std::memcmp(IsCompressed, &Header, sizeof(IsCompressed)))
+    {
+        BitsPerPixel = Header[16];
+        width  = Header[13] * 256 + Header[12];
+        height = Header[15] * 256 + Header[14];
+        size  = ((width * BitsPerPixel + 31) / 32) * 4 * height;
+
+        if ((BitsPerPixel != 24) && (BitsPerPixel != 32))
+        {
+            hFile.close();
+            throw std::invalid_argument("Invalid File Format. Required: 24 or 32 Bit Image.");
+        }
+
+        PixelInfo Pixel = {0};
+        int CurrentByte = 0;
+        std::size_t CurrentPixel = 0;
+        ImageCompressed = true;
+        std::uint8_t ChunkHeader = {0};
+        int BytesPerPixel = (BitsPerPixel / 8);
+        ImageData.resize(width * height * sizeof(PixelInfo));
+
+        do
+        {
+            hFile.read(reinterpret_cast<char*>(&ChunkHeader), sizeof(ChunkHeader));
+
+            if(ChunkHeader < 128)
+            {
+                ++ChunkHeader;
+                for(int I = 0; I < ChunkHeader; ++I, ++CurrentPixel)
+                {
+                    hFile.read(reinterpret_cast<char*>(&Pixel), BytesPerPixel);
+
+                    ImageData[CurrentByte++] = Pixel.B;
+                    ImageData[CurrentByte++] = Pixel.G;
+                    ImageData[CurrentByte++] = Pixel.R;
+                    if (BitsPerPixel > 24) ImageData[CurrentByte++] = Pixel.A;
+                }
+            }
+            else
+            {
+                ChunkHeader -= 127;
+                hFile.read(reinterpret_cast<char*>(&Pixel), BytesPerPixel);
+
+                for(int I = 0; I < ChunkHeader; ++I, ++CurrentPixel)
+                {
+                    ImageData[CurrentByte++] = Pixel.B;
+                    ImageData[CurrentByte++] = Pixel.G;
+                    ImageData[CurrentByte++] = Pixel.R;
+                    if (BitsPerPixel > 24) ImageData[CurrentByte++] = Pixel.A;
+                }
+            }
+        } while(CurrentPixel < (width * height));
+    }
+    else
+    {
+        hFile.close();
+        throw std::invalid_argument("Invalid File Format. Required: 24 or 32 Bit TGA File.");
+    }
+
+    hFile.close();
+    this->Pixels = ImageData;
+}
+*/
+
 
 // TODO нормальные __host__ __device__
 // TODO сделать класс углов || взять из готовой (cuBLAS??)
 // TODO текстуры + шрифт
 // TODO нормальная либа векторов
 // TODO переписать сообщения об ошибках на cuda error
-// TODO профилировщик
-// TODO тени
 
-//float facingRatio = std::max(0, N.dotProduct(V));
 
 #define M_PI 3.1415
-#define MAP_SIZE 100
+#define MAP_SIZE 200
 
 
 #define distToViewPort 1.0
 #define Vh 1.0
 #define Vw 1.0
 
-#define imageHeight 512
-#define imageWidth 512
+#define imageHeight 1024
+#define imageWidth 1024
 
 #define crossSize 64
 #define BOX_SIZE 4
 
-#define MAX_FRAMES 100
+#define MAX_FRAMES 1000
 //#define DEBUG
-
 
 
 
@@ -208,46 +330,102 @@ Ray computePrimRay(Camera *cam, const int i, const int j) {
 
 
 __host__ __device__
-unsigned int checkWorld(Box *box, unsigned int *world) {
+bool checkWorld(Box *box, voxel* world) {
     if (box->get_x() < 0 || box->get_y() < 0 || box->get_z() < 0 || box->get_x() >= MAP_SIZE ||
         box->get_y() >= MAP_SIZE || box->get_z() >= MAP_SIZE)
         return 0;
-    return world[box->get_x() * MAP_SIZE * MAP_SIZE + box->get_y() * MAP_SIZE + box->get_z()];
+    return world[box->get_x() * MAP_SIZE * MAP_SIZE + box->get_y() * MAP_SIZE + box->get_z()].isActive();
 }
 
 
 /* (x, y, z) - индексы текущего бокса в world */
 __device__
-double3 traverseRay(int startX, int startY, int startZ, Ray &ray, int deep, unsigned int *world, Box *lastBox) {
-    const double eps = 0.000001;
+double3 traverseRay(int startX, int startY, int startZ, Ray &ray, int deep, voxel* world, Box *lastBox) {
     Box currentBox = Box(startX, startY, startZ);
+    ray.direction = Normalize(&ray.direction);
+    double3 deltaT;
+
+    double t_x = ((BOX_SIZE - ray.source.x) / ray.direction.x), t_y = ((BOX_SIZE - ray.source.y) / ray.direction.y), t_z = ((BOX_SIZE - ray.source.z) / ray.direction.z) ;
+    if (ray.direction.x < 0) {
+        deltaT.x = -BOX_SIZE / ray.direction.x;
+        t_x = (floor(ray.source.x / BOX_SIZE) * BOX_SIZE
+               - ray.source.x) / ray.direction.x;
+    }
+    else {
+        deltaT.x = BOX_SIZE / ray.direction.x;
+        t_x = ((floor(ray.source.x / BOX_SIZE) + 1) * BOX_SIZE
+               - ray.source.x) / ray.direction.x;
+    }
+
+    if (ray.direction.y < 0) {
+        deltaT.y = -BOX_SIZE / ray.direction.y;
+        t_y = (floor(ray.source.y / BOX_SIZE) * BOX_SIZE
+               - ray.source.y) / ray.direction.y;
+    }
+    else {
+        deltaT.y = BOX_SIZE / ray.direction.y;
+        t_y = ((floor(ray.source.y / BOX_SIZE) + 1) * BOX_SIZE
+               - ray.source.y) / ray.direction.y;
+    }
+
+    if (ray.direction.z < 0) {
+        deltaT.z = -BOX_SIZE / ray.direction.z;
+        t_z = (floor(ray.source.z / BOX_SIZE) * BOX_SIZE
+               - ray.source.z) / ray.direction.z;
+    }
+    else {
+        deltaT.z = BOX_SIZE / ray.direction.z;
+        t_z = ((floor(ray.source.z / BOX_SIZE) + 1) * BOX_SIZE
+               - ray.source.z) / ray.direction.z;
+    }
     while (true) {
         if (currentBox.get_x() < 0 || currentBox.get_y() < 0 || currentBox.get_z() < 0 ||
-            currentBox.get_x() >= MAP_SIZE || currentBox.get_y() >= MAP_SIZE || currentBox.get_z() >= MAP_SIZE ||
-            deep > MAP_SIZE * 2) {
+            currentBox.get_x() >= MAP_SIZE || currentBox.get_y() >= MAP_SIZE || currentBox.get_z() >= MAP_SIZE /*||
+            deep > MAP_SIZE * 2*/) {
             *lastBox = Box(-1, -1, -1);
             return make_double3(-1., -1., -1.);
         }
-        /* A1 < A2 : точки пересечения луча и бокса */
-        double3 A1 = double3(), A2 = double3();
-        if (currentBox.intersect(ray, 0, INFINITY, A1, A2)) {
-            double3 A2_normalized = A2 - currentBox.bounds[0];
-            if (abs(A2_normalized.x) < eps)
-                currentBox.dec_x();
-            if (abs(A2_normalized.y) < eps)
-                currentBox.dec_y();
-            if (abs(A2_normalized.z) < eps)
-                currentBox.dec_z();
-            if (abs(A2_normalized.x - BOX_SIZE) < eps)
-                currentBox.inc_x();
-            if (abs(A2_normalized.y - BOX_SIZE) < eps)
-                currentBox.inc_y();
-            if (abs(A2_normalized.z - BOX_SIZE) < eps)
-                currentBox.inc_z();
-            if (checkWorld(&currentBox, world)) {
-                *lastBox = currentBox;
-                return A2;
+        double t = 0.;
+
+        if (t_x < t_y) {
+            if (t_x < t_z) {
+                t = t_x;
+                t_x += deltaT.x; // increment, next crossing along x
+                if(ray.direction.x < 0)
+                    currentBox.dec_x();
+                else
+                    currentBox.inc_x();
             }
+            else {
+                t = t_z;
+                t_z += deltaT.z; // increment, next crossing along x
+                if(ray.direction.z < 0)
+                    currentBox.dec_z();
+                else
+                    currentBox.inc_z();
+            }
+        }
+        else {
+            if (t_y < t_z) {
+                t = t_y;
+                t_y += deltaT.y; // increment, next crossing along x
+                if(ray.direction.y < 0)
+                    currentBox.dec_y();
+                else
+                    currentBox.inc_y();
+            }
+            else {
+                t = t_z;
+                t_z += deltaT.z; // increment, next crossing along x
+                if(ray.direction.z < 0)
+                    currentBox.dec_z();
+                else
+                    currentBox.inc_z();
+            }
+        }
+        if (checkWorld(&currentBox, world)) {
+            *lastBox = currentBox;
+            return ray.source + ray.direction * t;
         }
         deep++;
     }
@@ -256,7 +434,7 @@ double3 traverseRay(int startX, int startY, int startZ, Ray &ray, int deep, unsi
 /* копипаста траверс_рея для удаления блоков*/
 __host__ __device__
 bool
-hitRay(int startX, int startY, int startZ, Ray &ray, int deep, Box &boxToDelete, Box &boxToAdd, unsigned int *world) {
+hitRay(int startX, int startY, int startZ, Ray &ray, int deep, Box &boxToDelete, Box &boxToAdd, voxel* world) {
     const double eps = 0.000001;
     Box currentBox = Box(startX, startY, startZ);
     while (true) {
@@ -293,44 +471,50 @@ hitRay(int startX, int startY, int startZ, Ray &ray, int deep, Box &boxToDelete,
 
 // TODO нужно ли делать это в хосте?
 __host__ __device__
-void deleteVoxel(Camera *cam, unsigned int *world) {
+void deleteVoxel(Camera *cam, voxel* world) {
     Ray hit = computePrimRay(cam, imageWidth / 2, imageHeight / 2);
     Box boxToDelete = Box(0, 0, 0), boxToAdd = Box(0, 0, 0);
     if (hitRay(static_cast<int>(cam->eyePosition.x / BOX_SIZE),
                static_cast<int>(cam->eyePosition.y / BOX_SIZE),
                static_cast<int>(cam->eyePosition.z / BOX_SIZE),
                hit, 5, boxToDelete, boxToAdd, world)) {
-        world[boxToDelete.get_x() * MAP_SIZE * MAP_SIZE + boxToDelete.get_y() * MAP_SIZE + boxToDelete.get_z()] = 0;
+        int dx[] = { 1, 0, -1, 0, 0, 0};
+        int dy[] = { 0, 1, 0, -1, 0, 0 };
+        int dz[] = { 0, 0, 0, 0, 1, -1 };
+        for (int i = 0; i < 6; i++) {
+            world[(boxToDelete.get_x() + dx[i]) * MAP_SIZE * MAP_SIZE + (boxToDelete.get_y() + dy[i]) * MAP_SIZE + boxToDelete.get_z() + dz[i]].setInactive();
+        }
+        world[boxToDelete.get_x() * MAP_SIZE * MAP_SIZE + boxToDelete.get_y() * MAP_SIZE + boxToDelete.get_z()].setInactive();
     }
 
 }
 
 __host__ __device__
-void addVoxel(Camera *cam, unsigned int *world) {
+void addVoxel(Camera *cam, voxel* world) {
     Ray hit = computePrimRay(cam, imageWidth / 2, imageHeight / 2);
     Box boxToAdd = Box(0, 0, 0), boxToDelete = Box(0, 0, 0);
     if (hitRay(static_cast<int>(cam->eyePosition.x / BOX_SIZE),
                static_cast<int>(cam->eyePosition.y / BOX_SIZE),
                static_cast<int>(cam->eyePosition.z / BOX_SIZE),
                hit, 5, boxToDelete, boxToAdd, world)) {
-        world[boxToAdd.get_x() * MAP_SIZE * MAP_SIZE + boxToAdd.get_y() * MAP_SIZE + boxToAdd.get_z()] = 1;
+        world[boxToAdd.get_x() * MAP_SIZE * MAP_SIZE + boxToAdd.get_y() * MAP_SIZE + boxToAdd.get_z()].setActive();
     }
 }
 
 
 
 __global__
-void traversePixels(uint3 *screen, Camera *cam, unsigned int *world, double3 *lightSource) {
+void traversePixels(uint3 *screen, Camera *cam, voxel* world, double3 *lightSource) {
     __shared__ uint3 temp[512];
     __shared__ double3 firstHitDots[512];
     __shared__ Camera sharedCam;
     __shared__ double3 firstHitDotsNormalized[512];
     sharedCam = *cam;
-    double eps = 0.0001;
+    double eps = 0.0000001;
     // int idx = blockIdx.x * blockDim.x + threadIdx.x;
     Box currBox = Box();
 
-    uint3 color = make_uint3(3, 196, 161); // красиво
+    uchar3 color;
 
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     int j = blockIdx.y * blockDim.y + threadIdx.y;
@@ -340,15 +524,17 @@ void traversePixels(uint3 *screen, Camera *cam, unsigned int *world, double3 *li
 
     Ray primRay = computePrimRay(cam, i, j);
     firstHitDots[linearThreadIdxInBlock] = traverseRay((static_cast<int>(sharedCam.eyePosition.x / BOX_SIZE)),
-                                            (static_cast<int>(sharedCam.eyePosition.y / BOX_SIZE)),
-                                            (static_cast<int>(sharedCam.eyePosition.z / BOX_SIZE)), primRay, 0, world, &currBox);
+                                                       (static_cast<int>(sharedCam.eyePosition.y / BOX_SIZE)),
+                                                       (static_cast<int>(sharedCam.eyePosition.z / BOX_SIZE)), primRay, 0, world, &currBox);
     double3 emptyConst = make_double3(-1., -1., -1.);
     if (firstHitDots[linearThreadIdxInBlock] == emptyConst) {
         /** мы не коснулись ничего = небо */
-        color = make_uint3(21, 4, 133);
+        color = make_uchar3(21, 4, 133);
     } else if (checkWorld(&currBox, world) == 1) {
         __syncthreads();
-        double3 dir = firstHitDots[linearThreadIdxInBlock] - *lightSource;
+        int3 coordinatesOfVoxel = make_int3(currBox.get_x(), currBox.get_y(), currBox.get_z());
+        color = world[coordinatesOfVoxel.x * MAP_SIZE * MAP_SIZE + coordinatesOfVoxel.y * MAP_SIZE + coordinatesOfVoxel.z].color;
+        double3 dir =  firstHitDots[linearThreadIdxInBlock] - *lightSource;
         Ray shadowRay;
         shadowRay.source = *lightSource;
         shadowRay.direction = dir;
@@ -357,48 +543,51 @@ void traversePixels(uint3 *screen, Camera *cam, unsigned int *world, double3 *li
                                            (static_cast<int>(lightSource->z / BOX_SIZE)), shadowRay, 0, world,
                                            &currBox);
         cudaDeviceSynchronize();
-        if (firstHitDots[linearThreadIdxInBlock].y / BOX_SIZE == MAP_SIZE - 10)
-            color = make_uint3(198, 42, 136);
+        /*if (firstHitDots[linearThreadIdxInBlock].y / BOX_SIZE == MAP_SIZE - 10)
+            color = make_uint3(198, 42, 136);*/
+        //cudaDeviceSynchronize();
         if (!(lastLightHit == firstHitDots[linearThreadIdxInBlock])) {
             /** случай когда точка падения полностью в тени */
-            color = color * 0.3;
+            color = color * 0.2;
         } else {
             /** случай когда свет дошел до точки */
             /** найти на какой грани лежит точка firstHitDot */
             firstHitDotsNormalized[linearThreadIdxInBlock] =
-                    firstHitDots[linearThreadIdxInBlock] - make_double3(static_cast<int>(firstHitDots[linearThreadIdxInBlock].x / BOX_SIZE) * BOX_SIZE,
-                                                             static_cast<int>(firstHitDots[linearThreadIdxInBlock].y / BOX_SIZE) * BOX_SIZE,
-                                                             static_cast<int>(firstHitDots[linearThreadIdxInBlock].z / BOX_SIZE) * BOX_SIZE);
-            double3 normal = make_double3(0, 0, 0);
+                firstHitDots[linearThreadIdxInBlock] - make_double3(round(firstHitDots[linearThreadIdxInBlock].x / BOX_SIZE.) * BOX_SIZE,
+                                                                    round(firstHitDots[linearThreadIdxInBlock].y / BOX_SIZE.) * BOX_SIZE,
+                                                                    round(firstHitDots[linearThreadIdxInBlock].z / BOX_SIZE.) * BOX_SIZE);
+            double3 normal = make_double3(0., 0., 0.);
             //cudaDeviceSynchronize();
             if (abs(firstHitDotsNormalized[linearThreadIdxInBlock].x) < eps)
                 normal.x = -1.;
-            if (abs(firstHitDotsNormalized[linearThreadIdxInBlock].y) < eps)
-                normal.y = -1.;
-            if (abs(firstHitDotsNormalized[linearThreadIdxInBlock].z) < eps)
-                normal.z = -1.;
             if (abs(firstHitDotsNormalized[linearThreadIdxInBlock].x - BOX_SIZE) < eps)
                 normal.x = +1.;
+            if (abs(firstHitDotsNormalized[linearThreadIdxInBlock].y) < eps)
+                normal.y = -1.;
             if (abs(firstHitDotsNormalized[linearThreadIdxInBlock].y - BOX_SIZE) < eps)
                 normal.y = +1.;
+            if (abs(firstHitDotsNormalized[linearThreadIdxInBlock].z) < eps)
+                normal.z = -1.;
             if (abs(firstHitDotsNormalized[linearThreadIdxInBlock].z - BOX_SIZE) < eps)
                 normal.z = +1.;
             double lightIntensity = 0.2;
-            double cosx = Dot(normal, shadowRay.direction) / Magnitude(normal) / Magnitude(shadowRay.direction);
-            cosx = cosx * -1.;
-            if (cosx >= 0.)
-                lightIntensity += cosx;
+            double cosx = Dot(normal, shadowRay.direction * -1.) / Magnitude(normal) / Magnitude(shadowRay.direction);
+
             double diffuser = (Magnitude(firstHitDots[linearThreadIdxInBlock] - *lightSource));
-            /** TODO MAGIC NUMBER, REALLY MAGIC */
             //cosx = 130000 * cosx / (diffuser * diffuser);
-            if (cosx >= 1.)
-                cosx = 1.;
-            color = color * cosx;
+
+            if (cosx >= eps)
+                lightIntensity += cosx;
+
+
+            if (lightIntensity > 1.)
+                lightIntensity = 1.0;
+            color = color * lightIntensity;
             //cudaDeviceSynchronize();
         }
     } else {
         /** куб Валера */
-        color = make_uint3(255, 255, 255);
+        color = make_uchar3(255, 255, 255);
     }
     temp[linearThreadIdxInBlock].x = (static_cast<unsigned char>(color.x));
     temp[linearThreadIdxInBlock].y = (static_cast<unsigned char>(color.y));
@@ -409,9 +598,11 @@ void traversePixels(uint3 *screen, Camera *cam, unsigned int *world, double3 *li
     screen[idx].z = temp[linearThreadIdxInBlock].z;
 
 }
-
+/*
+std::chrono::milliseconds start_time;
+__host__ __device__
 void generateMap(unsigned int *world) {
-    /*static double t1 = 0.001, t2 = 0.001;
+    static double t1 = 0.001, t2 = 0.001;
     std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()
     ) - start_time;
@@ -431,11 +622,12 @@ void generateMap(unsigned int *world) {
         world[idx] = 1;
         t2 += 0.05;
     }
-    t1 += 0.05;*/
-    for (int i = 0; i < MAP_SIZE * MAP_SIZE * MAP_SIZE; i++)
-        world[i] = (rand() % 1000 == 0);
-}
+    t1 += 0.05;
+    //for (int i = 0; i < MAP_SIZE * MAP_SIZE * MAP_SIZE; i++)
+    //    world[i] = (rand() % 1000 == 0);
 
+}
+*/
 bool bounds(double3 pos) {
     if (pos.x >= (MAP_SIZE - 1) * BOX_SIZE || pos.y >= (MAP_SIZE - 1) * BOX_SIZE ||
         pos.z >= ((MAP_SIZE - 1) * BOX_SIZE) || pos.x <= 0 || pos.y <= 0 || pos.z <= 0)
@@ -450,15 +642,24 @@ void printDebug(Camera *cam) {
 }
 
 int main() {
-    int frames = 0;
 
+    /*
+    Tga info = Tga("C:/Users/...../Desktop/SomeTGA.tga");
+
+    GLuint texture = 0;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, info.HasAlphaChannel() ? GL_RGBA : GL_RGB, info.GetWidth(), info.GetWidth(), 0, info.HasAlphaChannel() ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, info.GetPixels().data());
+
+    */
+    int frames = 0;
     float sumScreenRenderTime = 0.0;
 
-    unsigned int *world;
+    voxel *world;
     Camera *cam;
     uint3 *screen;
-    double3 *light;
-    if (cudaMallocManaged(&world, MAP_SIZE * MAP_SIZE * MAP_SIZE * sizeof(int)))
+    double3* light;
+    if (cudaMallocManaged(&world, MAP_SIZE * MAP_SIZE * MAP_SIZE * sizeof(world[0])))
         fprintf(stderr, "cuda malloc error: world");
     if (cudaMallocManaged(&screen, imageHeight * imageWidth * sizeof(uint3)))
         fprintf(stderr, "cuda malloc error: screen");
@@ -475,13 +676,19 @@ int main() {
         x = i / MAP_SIZE / MAP_SIZE;
         y = i / MAP_SIZE % MAP_SIZE;
         z = i % MAP_SIZE;
-        /*if(x > MAP_SIZE/4 && y > MAP_SIZE/4 && z > MAP_SIZE/4)*/
-        if (y == MAP_SIZE - 10)
-            world[i] = 1;
-        blocksCnt += world[i];
+        int R = 35;
+        if ((x - MAP_SIZE / 2) * (x - MAP_SIZE / 2) + (y - (MAP_SIZE - 2 * R)) * (y - (MAP_SIZE - 2 * R)) + (z - MAP_SIZE / 2) * (z - MAP_SIZE / 2) <= R * R) {
+            world[i].setActive();
+            world[i].setColor(rand()%256, rand()%256, rand()%256);
+        }
+        if (y == MAP_SIZE - 10) {
+            world[i].setActive();
+            world[i].setColor(0, 255, 0);
+        }
+        blocksCnt += world[i].isActive();
     }
+    cudaDeviceSynchronize();
     printf("Num of voxels: %d\n", blocksCnt);
-
     double3 eyePosition = make_double3(64.636510, 1.0, 294.136342);
     cam->eyePosition = eyePosition;
     cam->angleX = 234.833333;
@@ -511,10 +718,11 @@ int main() {
     localLight.y = static_cast<int>(10 * sin(t)) + MAP_SIZE / 2;
     localLight.z = 10;
 
-    while (frames++ < MAX_FRAMES && window.isOpen()) {
-        world[localLight.x * MAP_SIZE * MAP_SIZE +
-              localLight.y * MAP_SIZE +
-              localLight.z] = 0;
+    while (window.isOpen()) {
+
+
+
+        world[localLight.x * MAP_SIZE * MAP_SIZE + localLight.y * MAP_SIZE + localLight.z].setInactive();
 
         localLight.x = static_cast<int>(40 * cos(t)) + MAP_SIZE / 2;
         localLight.y = static_cast<int>(40 * sin(t)) + MAP_SIZE / 2;
@@ -527,20 +735,17 @@ int main() {
         light->z = localLight.z * BOX_SIZE + BOX_SIZE / 2.;
 
         world[localLight.x * MAP_SIZE * MAP_SIZE +
-              localLight.y * MAP_SIZE +
-              localLight.z] = 2;
+            localLight.y * MAP_SIZE +
+            localLight.z].setLight();
 
         SetCursorPos(window.getPosition().x + imageWidth / 2, window.getPosition().y + imageHeight / 2);
         window.sf::Window::setMouseCursorVisible(false);
-        //int blockSize = 512;
-        //int numBlocks = (imageWidth * imageHeight + blockSize - 1) / blockSize;
         dim3 threads(16,16);
         dim3 blocks(imageWidth/threads.x,imageHeight/threads.y);
 
 
 
 
-        //traversePixels<<<numBlocks, blockSize>>>(screen, cam, world, light);
         traversePixels<<<blocks, threads>>>(screen, cam, world, light);
         //cudaDeviceSynchronize();
 
@@ -592,6 +797,7 @@ int main() {
             }*/
         }
 
+
         sf::Sprite crossSprite;
         crossSprite.setTexture(crossTexture);
         crossSprite.setPosition(imageWidth * 4 / 2. - crossSize / 2., imageHeight * 4 / 2. - crossSize / 2.);
@@ -602,13 +808,6 @@ int main() {
         pixels.setTexture(pixelsTexture, true);
 
 
-        /*sf::Text text;
-        text.setFont(font);
-        char str[256];
-        sprintf(str, "(%.2lf ; %.2lf ; %.2lf)", cam.eyePosition.x, cam.eyePosition.y,   cam.eyePosition.z);
-        text.setString(str);
-        text.setCharacterSize(16);
-        text.setFillColor(sf::Color::Green);*/
 
         if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
             deleteVoxel(cam, world);
@@ -616,7 +815,6 @@ int main() {
         if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) {
             addVoxel(cam, world);
         }
-
         POINT mousexy;
         GetCursorPos(&mousexy);
         int xt = window.getPosition().x + imageWidth / 2;
@@ -651,7 +849,6 @@ int main() {
                 cam->eyePosition.y -= cam->speed;
         window.clear(sf::Color::Magenta);
         window.draw(pixels);
-        /*window.draw(text);*/
         if (drawCross)
             window.draw(crossSprite);
         window.display();
@@ -661,5 +858,6 @@ int main() {
     cudaFree(cam);
     std::cout << "frames: " << frames-1 << std::endl;
     std::cout << "sumScreenRenderTime: " << sumScreenRenderTime << std::endl;
+
     return 0;
 }
