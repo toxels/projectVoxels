@@ -10,7 +10,7 @@ set_target_properties(voxelsWithCuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 
 include_directories(graphics/include)
-
+include_directories("C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.1/include")
 
 find_library(SFML-GRAPHICS sfml-graphics graphics/lib)
 find_library(SFML-WINDOW sfml-window graphics/lib)

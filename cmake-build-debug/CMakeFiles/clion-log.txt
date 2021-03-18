@@ -1,12 +1,247 @@
-C:\Users\miner\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\202.7660.37\bin\cmake\win\bin\cmake.exe "-DCMAKE_CUDA_COMPILER=C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.1/bin/nvcc.exe" -G "Visual Studio 16 2019" -O2 -m64 D:\mine\tmpVoxels\projectVoxels
--- Selecting Windows SDK version 10.0.18362.0 to target Windows 10.0.19041.
--- The CUDA compiler identification is NVIDIA 11.1.74
+"C:\Program Files\JetBrains\CLion 2020.2.3\bin\cmake\win\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - NMake Makefiles" D:\ProjectVoxels
+-- The CUDA compiler identification is unknown
 -- Check for working CUDA compiler: C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.1/bin/nvcc.exe
--- Check for working CUDA compiler: C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.1/bin/nvcc.exe - works
--- Detecting CUDA compiler ABI info
--- Detecting CUDA compiler ABI info - done
--- Detecting CUDA compile features
--- Detecting CUDA compile features - done
--- Configuring done
--- Generating done
--- Build files have been written to: D:/mine/tmpVoxels/projectVoxels/cmake-build-debug
+-- Check for working CUDA compiler: C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.1/bin/nvcc.exe - broken
+CMake Error at C:/Program Files/JetBrains/CLion 2020.2.3/bin/cmake/win/share/cmake-3.17/Modules/CMakeTestCUDACompiler.cmake:46 (message):
+  The CUDA compiler
+
+    "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.1/bin/nvcc.exe"
+
+  is not able to compile a simple test program.
+
+  It fails with the following output:
+
+    Change Dir: D:/ProjectVoxels/cmake-build-debug/CMakeFiles/CMakeTmp
+    
+    Run Build Command(s):nmake /nologo cmTC_074d8\fast && 	"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\bin\HostX86\x86\nmake.exe"  -f CMakeFiles\cmTC_074d8.dir\build.make /nologo -L                  CMakeFiles\cmTC_074d8.dir\build
+    Building CUDA object CMakeFiles/cmTC_074d8.dir/main.cu.obj
+    	C:\PROGRA~1\NVIDIA~2\CUDA\v11.1\bin\nvcc.exe     -x cu -c D:\ProjectVoxels\cmake-build-debug\CMakeFiles\CMakeTmp\main.cu -o CMakeFiles\cmTC_074d8.dir\main.cu.obj
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\vcruntime.h(197): error: invalid redeclaration of type name "size_t"
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\vcruntime_new.h(48): error: first parameter of allocation function must be of type "size_t"
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\vcruntime_new.h(53): error: first parameter of allocation function must be of type "size_t"
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\vcruntime_new.h(59): error: first parameter of allocation function must be of type "size_t"
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\vcruntime_new.h(64): error: first parameter of allocation function must be of type "size_t"
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\vcruntime_new.h(166): error: first parameter of allocation function must be of type "size_t"
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\vcruntime_new.h(181): error: first parameter of allocation function must be of type "size_t"
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\vcruntime_new_debug.h(26): error: first parameter of allocation function must be of type "size_t"
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\vcruntime_new_debug.h(34): error: first parameter of allocation function must be of type "size_t"
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(103): error: class template "std::_Is_function" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(138): error: class template "std::_Is_memfunptr" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(1780): error: class template "std::result_of" has already been defined
+    
+    C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\include\type_traits(1780): error: class template "std::result_of" has already been defined
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\crt/common_functions.h(125): error: first parameter of allocation function must be of type "size_t"
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\crt/common_functions.h(126): error: first parameter of allocation function must be of type "size_t"
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\crt/common_functions.h(259): error: first parameter of allocation function must be of type "size_t"
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\crt/common_functions.h(260): error: first parameter of allocation function must be of type "size_t"
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_20_intrinsics.hpp(124): error: cannot overload functions distinguished by return type alone
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_20_intrinsics.hpp(125): error: cannot overload functions distinguished by return type alone
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_20_intrinsics.hpp(126): error: cannot overload functions distinguished by return type alone
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_20_intrinsics.hpp(127): error: cannot overload functions distinguished by return type alone
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_20_intrinsics.hpp(128): warning: declaration overloads built-in function "__nv_cvta_global_to_generic_impl"
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_20_intrinsics.hpp(128): error: more than one instance of overloaded function "__nv_cvta_global_to_generic_impl" has "C" linkage
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_20_intrinsics.hpp(129): warning: declaration overloads built-in function "__nv_cvta_shared_to_generic_impl"
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_20_intrinsics.hpp(129): error: more than one instance of overloaded function "__nv_cvta_shared_to_generic_impl" has "C" linkage
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_20_intrinsics.hpp(130): warning: declaration overloads built-in function "__nv_cvta_constant_to_generic_impl"
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_20_intrinsics.hpp(130): error: more than one instance of overloaded function "__nv_cvta_constant_to_generic_impl" has "C" linkage
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_20_intrinsics.hpp(131): warning: declaration overloads built-in function "__nv_cvta_local_to_generic_impl"
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_20_intrinsics.hpp(131): error: more than one instance of overloaded function "__nv_cvta_local_to_generic_impl" has "C" linkage
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_32_intrinsics.hpp(104): error: asm operand type size(8) does not match type/size implied by constraint 'r'
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_32_intrinsics.hpp(105): error: asm operand type size(8) does not match type/size implied by constraint 'r'
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_32_intrinsics.hpp(109): error: asm operand type size(8) does not match type/size implied by constraint 'r'
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_32_intrinsics.hpp(110): error: asm operand type size(8) does not match type/size implied by constraint 'r'
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_32_intrinsics.hpp(111): error: asm operand type size(8) does not match type/size implied by constraint 'r'
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_32_intrinsics.hpp(112): error: asm operand type size(8) does not match type/size implied by constraint 'r'
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_32_intrinsics.hpp(113): error: asm operand type size(8) does not match type/size implied by constraint 'r'
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_32_intrinsics.hpp(114): error: asm operand type size(8) does not match type/size implied by constraint 'r'
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_32_intrinsics.hpp(115): error: asm operand type size(8) does not match type/size implied by constraint 'r'
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_32_intrinsics.hpp(116): error: asm operand type size(8) does not match type/size implied by constraint 'r'
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_32_intrinsics.hpp(117): error: asm operand type size(8) does not match type/size implied by constraint 'r'
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_32_intrinsics.hpp(118): error: asm operand type size(8) does not match type/size implied by constraint 'r'
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_32_intrinsics.hpp(119): error: asm operand type size(8) does not match type/size implied by constraint 'r'
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_32_intrinsics.hpp(120): error: asm operand type size(8) does not match type/size implied by constraint 'r'
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_32_intrinsics.hpp(122): error: asm operand type size(8) does not match type/size implied by constraint 'r'
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_32_intrinsics.hpp(123): error: asm operand type size(8) does not match type/size implied by constraint 'r'
+    
+    C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\include\sm_32_intrinsics.hpp(124): error: asm operand type size(8) does not match type/size implied by constraint 'r'
+    
+    Error limit reached.
+    100 errors detected in the compilation of "D:/ProjectVoxels/cmake-build-debug/CMakeFiles/CMakeTmp/main.cu".
+    Compilation terminated.
+    main.cu
+    NMAKE : fatal error U1077: C:\PROGRA~1\NVIDIA~2\CUDA\v11.1\bin\nvcc.exe : С‚СЋС‡С‚РЃСЂв€™С…СЌСЌв€љС‰ СЉСЋС„ "0x1"
+    Stop.
+    NMAKE : fatal error U1077: "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.27.29110\bin\HostX86\x86\nmake.exe" : С‚СЋС‡С‚РЃСЂв€™С…СЌСЌв€љС‰ СЉСЋС„ "0x2"
+    Stop.
+    
+    
+
+  
+
+  CMake will not be able to correctly generate this project.
+Call Stack (most recent call first):
+  CMakeLists.txt:2 (project)
+
+
+-- Configuring incomplete, errors occurred!
+See also "D:/ProjectVoxels/cmake-build-debug/CMakeFiles/CMakeOutput.log".
+See also "D:/ProjectVoxels/cmake-build-debug/CMakeFiles/CMakeError.log".

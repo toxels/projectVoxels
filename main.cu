@@ -7,6 +7,11 @@
 #include <vector>
 #include <fstream>
 
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+#include "builtin_types.h"
+#include "vector_functions.h"
+
 #include "geometry.cuh"
 #include "voxel.cuh"
 #include "tga.cuh"
@@ -43,7 +48,7 @@ public:
     double3 eyePosition;
     double angleX, angleY;
     double speed;
-
+    
     Camera(double3 &eye, double xAng, double yAng) :
             angleX(xAng), angleY(yAng), eyePosition(eye), speed(0.3) {}
 };
@@ -513,7 +518,7 @@ int main() {
         fprintf(stderr, "cuda malloc error: light");
     uint3 localLight = make_uint3(MAP_SIZE / 2, 15, MAP_SIZE / 2);
     auto *hostScreen = static_cast<uint3 *>(malloc(imageHeight * imageWidth * sizeof(uint3)));
-
+    
     int blocksCnt = 0;
     // MAP GENERATION
     /*for (int i = 0; i < MAP_SIZE * MAP_SIZE * MAP_SIZE; i++) {
@@ -681,8 +686,8 @@ int main() {
         sf::Sprite pixels;
         pixels.setTexture(pixelsTexture, true);
 
-
-
+        
+        
         if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
             deleteVoxel(cam, world);
         }

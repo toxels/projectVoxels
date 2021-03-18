@@ -1,3 +1,0 @@
-D:/mine/tmpVoxels/projectVoxels/cmake-build-debug/CMakeFiles/voxelsWithCuda.dir
-D:/mine/tmpVoxels/projectVoxels/cmake-build-debug/CMakeFiles/ALL_BUILD.dir
-D:/mine/tmpVoxels/projectVoxels/cmake-build-debug/CMakeFiles/ZERO_CHECK.dir
