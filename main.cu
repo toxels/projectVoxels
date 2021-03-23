@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <SFML/Graphics.hpp>
 #include <SFML/OpenGL.hpp>
 #include <SFML/Window.hpp>
@@ -38,7 +39,7 @@
 
 #define MAX_FRAMES (1000)
 //#define DEBUG
-
+#define LOAD_FROM_FILE
 
 
 struct Camera {
@@ -488,7 +489,61 @@ void printDebug(Camera *cam) {
     printf("eyePosition: (%lf, %lf, %lf)\n", cam->eyePosition.x, cam->eyePosition.y, cam->eyePosition.z);
 }
 
+
+struct headerToSave {
+    int sizeX, sizeY, sizeZ;
+};
+
+void saveVoxelModel(voxel* model, int sizeX, int sizeY, int sizeZ, const std::string& fileName) {
+    headerToSave header;
+    header.sizeX = sizeX;
+    header.sizeY = sizeY;
+    header.sizeZ = sizeZ;
+    std::ofstream file(fileName, std::ios::out | std::ios::binary);
+    if (!file) {
+        std::cout << "Cannot open file to save the model" << std::endl;
+    }
+    file.write((char*) &header, sizeof(header));
+    for (int i = 0; i < sizeX; i++) {
+        for (int j = 0; j < sizeY; j++) {
+            file.write((char*) &model[i * sizeX * sizeX + j * sizeY], sizeZ * sizeof(voxel));
+        }
+    }
+        
+}
+
+
 int main() {
+    int frames = 0;
+    float sumScreenRenderTime = 0.0;
+
+    voxel *world;
+    Camera *cam;
+    uint3 *screen;
+    double3* light;
+
+    // TODO можно вынести в функцию загрузки/создания мира, но всё вместе, чтобы не создавать world отдельно
+#ifdef LOAD_FROM_FILE
+    std::ifstream file("save.dat", std::ios::out | std::ios::binary); // open file on "wb" mode
+    if (!file) {
+        std::cout << "Cannot open file to load the world" << std::endl;
+        return 1; // возможно стоит убрать и просто генерить мир самим
+    }
+    
+    headerToSave header;   
+    file.read((char*)&header, sizeof(header));  // read the header of save-file
+    // TODO не понятно что делать с дефайнами размера мира; если их не менять, а размер мира будет другим, то возможна СМЭРТЬ
+    if (cudaMallocManaged(&world, header.sizeX * header.sizeY * header.sizeZ * sizeof(world[0])))
+        fprintf(stderr, "cuda malloc error: world");
+    
+    for (int i = 0; i < header.sizeX; i++) {    // reading saved array of bytes
+        for (int j = 0; j < header.sizeY; j++) {
+            file.read((char*)&world[i * header.sizeX * header.sizeX + j * header.sizeY], header.sizeZ * sizeof(voxel));
+        }
+    }
+#else
+    if (cudaMallocManaged(&world, MAP_SIZE * MAP_SIZE * MAP_SIZE * sizeof(world[0])))
+        fprintf(stderr, "cuda malloc error: world");
 
     unsigned char* heightMap = NULL;
     int heightMapWidth, heightMapHeight, heightMapChannels;
@@ -498,18 +553,37 @@ int main() {
     int photoTgaWidth, photoTgaHeight, photoTgaChannels;
     LoadTGA("shlepa.tga", photoTga, photoTgaWidth, photoTgaHeight, photoTgaChannels);
 
+    std::cout << "heightMapChannels: " << heightMapChannels << std::endl;
+    for (int i = 0; i < heightMapHeight; i++) {
+        for (int j = 0; j < heightMapWidth; j++) {
+            int x = i;
+            int y = MAP_SIZE - ((heightMap[i * heightMapWidth + j]) * (MAP_SIZE / 2)) / (256 * 3);
+            int z = j;
+            for (; y < MAP_SIZE; y++) {
+                int idx = x * MAP_SIZE * MAP_SIZE + y * MAP_SIZE + z;
+                world[idx].setActive();
+                if (y > MAP_SIZE - 20)
+                    world[idx].setColor(19, 133, 16);
+                else
+                    world[idx].setColor(240, 240, 240);
+            }
+        }
+    }
+    std::cout << "photoTgaChannels: " << photoTgaChannels << std::endl;
+    std::cout << "photoTgaHeight: " << photoTgaHeight << std::endl;
+    std::cout << "photoTgaWidth: " << photoTgaWidth << std::endl;
+    for (int i = 0; i < photoTgaHeight; i++) {
+        for (int j = 0; j < photoTgaWidth; j++) {
+            int x = j;
+            int y = 0;
+            int z = i;
+            int idx = x * MAP_SIZE * MAP_SIZE + y * MAP_SIZE + z;
+            world[idx].setActive();
+            world[idx].setColor(photoTga[i * 3 * photoTgaWidth + j * 3], photoTga[i * 3 * photoTgaWidth + j * 3 + 1], photoTga[i * 3 * photoTgaWidth + j * 3 + 2]);
+        }
+    }
 
-
-
-    int frames = 0;
-    float sumScreenRenderTime = 0.0;
-
-    voxel *world;
-    Camera *cam;
-    uint3 *screen;
-    double3* light;
-    if (cudaMallocManaged(&world, MAP_SIZE * MAP_SIZE * MAP_SIZE * sizeof(world[0])))
-        fprintf(stderr, "cuda malloc error: world");
+#endif // LOAD_FROM_FILE
     if (cudaMallocManaged(&screen, imageHeight * imageWidth * sizeof(uint3)))
         fprintf(stderr, "cuda malloc error: screen");
     if (cudaMallocManaged(&cam, sizeof(Camera)))
@@ -537,35 +611,7 @@ int main() {
         }
         blocksCnt += world[i].isActive();
     }*/
-    std::cout << "heightMapChannels: " << heightMapChannels << std::endl;
-    for (int i = 0; i < heightMapHeight; i++) {
-        for (int j = 0; j < heightMapWidth; j++) {
-            int x = i;
-            int y = MAP_SIZE - ((heightMap[i * heightMapWidth + j]) * (MAP_SIZE / 2)) / (256 * 3);
-            int z = j;
-            for (; y < MAP_SIZE; y++) {
-                int idx = x * MAP_SIZE * MAP_SIZE + y * MAP_SIZE + z;
-                world[idx].setActive();
-                if (y > MAP_SIZE - 20)
-                    world[idx].setColor(19, 133, 16);
-                else
-                    world[idx].setColor(240, 240, 240);
-            }
-        }
-    }
-    std::cout << "photoTgaChannels: " << photoTgaChannels << std::endl;
-    std::cout << "photoTgaHeight: " << photoTgaHeight << std::endl;
-    std::cout << "photoTgaWidth: " << photoTgaWidth << std::endl;
-    for (int i = 0; i < photoTgaHeight; i++) {
-        for (int j = 0; j < photoTgaWidth; j++) {
-            int x = j;
-            int y = 0;
-            int z = i;
-            int idx = x * MAP_SIZE * MAP_SIZE + y * MAP_SIZE + z;
-            world[idx].setActive();
-            world[idx].setColor(photoTga[i*3 * photoTgaWidth + j*3], photoTga[i*3 * photoTgaWidth + j*3 + 1], photoTga[i*3 * photoTgaWidth + j*3 + 2]);
-        }
-    }
+    
     cudaDeviceSynchronize();
     //std::cout << "Num of active voxels: " << blocksCnt << "\n";
     double3 eyePosition = make_double3(64.636510, 1.0, 294.136342);
@@ -656,6 +702,8 @@ int main() {
             if (event.type == sf::Event::KeyPressed) {
                 if (event.key.code == sf::Keyboard::Escape)
                     window.close();
+                if (event.key.code == sf::Keyboard::O)
+                    saveVoxelModel(world, MAP_SIZE, MAP_SIZE, MAP_SIZE, std::string("save.dat"));
                 if (event.key.code == sf::Keyboard::V)
                     drawCross = !drawCross;
                 if (event.key.code == sf::Keyboard::I)
@@ -726,6 +774,7 @@ int main() {
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
             if (bounds(cam->eyePosition - make_double3(0, cam->speed, 0)))
                 cam->eyePosition.y -= cam->speed;
+
         window.clear(sf::Color::Magenta);
         window.draw(pixels);
         if (drawCross)
