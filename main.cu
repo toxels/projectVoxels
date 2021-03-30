@@ -8,11 +8,7 @@
 #include <vector>
 #include <fstream>
 
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-#include "builtin_types.h"
-#include "vector_functions.h"
-
+#include "cudaHeaders.cuh"
 #include "geometry.cuh"
 #include "voxel.cuh"
 #include "tga.cuh"
@@ -21,25 +17,9 @@
 
 #include "voxelizer.cuh"
 
+#include "ray.cuh"
 
-
-#define M_PI (3.1415)
-#define MAP_SIZE (200)
-
-
-#define distToViewPort (1.0)
-#define Vh (1.0)
-#define Vw (1.0)
-
-#define imageHeight (1024)
-#define imageWidth (1024)
-
-#define crossSize (64)
-#define BOX_SIZE (4)
-
-#define MAX_FRAMES (1000)
-//#define DEBUG
-#define LOAD_FROM_FILE
+#include "settings.cuh"
 
 
 struct Camera {
@@ -54,11 +34,7 @@ public:
             angleX(xAng), angleY(yAng), eyePosition(eye), speed(0.3) {}
 };
 
-struct Ray {
-public:
-    double3 source;
-    double3 direction;
-};
+
 
 class Box {
 public:
@@ -499,10 +475,19 @@ int main() {
     Camera *cam;
     uint3 *screen;
     double3* light;
-
+/*
+    objModel testObjModel("deda.obj");
+    voxel* world;
+    int testVoxelModelSize = MAP_SIZE;
+    if (cudaMallocManaged(&world, testVoxelModelSize * testVoxelModelSize * testVoxelModelSize * sizeof(voxel)))
+        fprintf(stderr, "cuda malloc error: testVoxelModel");
+    objToVoxel(testVoxelModelSize, testObjModel, world);
+    saveVoxelModel(world, testVoxelModelSize, testVoxelModelSize, testVoxelModelSize, "test.dat");
+    cudaDeviceSynchronize();
+   */ 
     // TODO можно вынести в функцию загрузки/создания мира, но всё вместе, чтобы не создавать world отдельно
 #ifdef LOAD_FROM_FILE
-    std::ifstream file("save.dat", std::ios::out | std::ios::binary); // open file on "wb" mode
+    std::ifstream file("test.dat", std::ios::out | std::ios::binary); // open file on "wb" mode
     if (!file) {
         std::cout << "Cannot open file to load the world" << std::endl;
         return 1; // возможно стоит убрать и просто генерить мир самим
@@ -592,7 +577,7 @@ int main() {
     
     cudaDeviceSynchronize();
     //std::cout << "Num of active voxels: " << blocksCnt << "\n";
-    double3 eyePosition = make_double3(64.636510, 1.0, 294.136342);
+    double3 eyePosition = make_double3(MAP_SIZE*BOX_SIZE / 2, MAP_SIZE*BOX_SIZE / 2, MAP_SIZE*BOX_SIZE / 2);
     cam->eyePosition = eyePosition;
     cam->angleX = 234.833333;
     cam->angleY = -28.666667;
@@ -611,9 +596,11 @@ int main() {
     cudaMallocManaged(&moveNotStraight, sizeof(double3));
 
     double t = 0.0;
-    localLight.x = static_cast<int>(40 * cos(t)) + MAP_SIZE / 2;
-    localLight.y = MAP_SIZE / 2;
-    localLight.z = static_cast<int>(40 * sin(t)) + MAP_SIZE / 2;
+    //localLight.x = static_cast<int>(40 * cos(t)) + MAP_SIZE / 2;
+    localLight.x = MAP_SIZE - 2 ;
+    localLight.y = MAP_SIZE - 2;
+    localLight.z = MAP_SIZE - 2;
+    //localLight.z = static_cast<int>(40 * sin(t)) + MAP_SIZE / 2;
 
     while (window.isOpen()) {
         frames++;
@@ -621,10 +608,10 @@ int main() {
 
         world[localLight.x * MAP_SIZE * MAP_SIZE + localLight.y * MAP_SIZE + localLight.z].setInactive();
 
-        localLight.x = static_cast<int>(40 * cos(t)) + MAP_SIZE / 2;
-        localLight.z = static_cast<int>(40 * sin(t)) + MAP_SIZE / 2;
+        //localLight.x = static_cast<int>((MAP_SIZE / 2) * cos(t)) + MAP_SIZE / 2;
+        //localLight.z = static_cast<int>((MAP_SIZE / 2) * sin(t)) + MAP_SIZE / 2;
 
-        localLight.y = MAP_SIZE / 2;
+        //localLight.y = MAP_SIZE / 2;
         t += 0.05;
 
         light->x = localLight.x * BOX_SIZE + BOX_SIZE / 2.;

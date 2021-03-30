@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 #include_directories(${PROJECT_SOURCE_DIR})
-add_executable(voxelsWithCuda rayCast.cu geometry.cuh tga.h tga_by_nvidia.cu tga.cuh voxelizer.cu voxelizer.cuh saver.cu saver.cuh main.cu)
+add_executable(voxelsWithCuda rayCast.cu geometry.cuh tga.h tga_by_nvidia.cu tga.cuh voxelizer.cu voxelizer.cuh saver.cu saver.cuh settings.cuh cudaHeaders.cuh ray.cuh ray.cu main.cu)
 set_target_properties(voxelsWithCuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 
@@ -18,7 +18,6 @@ find_library(SFML-SYSTEM sfml-system graphics/lib)
 find_library(SFML-MAIN sfml-main graphics/lib)
 find_library(FREETYPE freetype graphics/lib)
 find_library(FREEGLUT freeglut graphics/lib)
-message(${FREEGLUT})
 target_link_libraries(voxelsWithCuda LINK_PUBLIC ${SFML-GRAPHICS})
 target_link_libraries(voxelsWithCuda LINK_PUBLIC ${SFML-WINDOW})
 target_link_libraries(voxelsWithCuda LINK_PUBLIC ${SFML-SYSTEM})

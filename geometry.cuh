@@ -1,4 +1,4 @@
-
+#pragma once
 #include <iostream>
 #include <cmath>
 #include <cfloat>
@@ -125,7 +125,7 @@ __host__ __device__
 inline double3 operator - (const double3 a, const double3 b){
     return (make_double3(a.x-b.x, a.y-b.y, a.z-b.z));
 }
-__device__
+__host__ __device__
 inline double Dot(const double3& a, const double3& b){
     return (a.x * b.x + a.y * b.y + a.z * b.z);
 }
