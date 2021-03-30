@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 #include_directories(${PROJECT_SOURCE_DIR})
-add_executable(voxelsWithCuda rayCast.cu geometry.cuh tga.h tga_by_nvidia.cu tga.cuh main.cu)
+add_executable(voxelsWithCuda rayCast.cu geometry.cuh tga.h tga_by_nvidia.cu tga.cuh voxelizer.cu voxelizer.cuh saver.cu saver.cuh main.cu)
 set_target_properties(voxelsWithCuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 

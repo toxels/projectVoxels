@@ -16,11 +16,11 @@
 #include "geometry.cuh"
 #include "voxel.cuh"
 #include "tga.cuh"
-// TODO нормальные __host__ __device__
-// TODO сделать класс углов || взять из готовой (cuBLAS??)
-// TODO текстуры + шрифт
-// TODO нормальная либа векторов
-// TODO переписать сообщения об ошибках на cuda error
+
+#include "saver.cuh"
+
+#include "voxelizer.cuh"
+
 
 
 #define M_PI (3.1415)
@@ -490,28 +490,6 @@ void printDebug(Camera *cam) {
 }
 
 
-struct headerToSave {
-    int sizeX, sizeY, sizeZ;
-};
-
-void saveVoxelModel(voxel* model, int sizeX, int sizeY, int sizeZ, const std::string& fileName) {
-    headerToSave header;
-    header.sizeX = sizeX;
-    header.sizeY = sizeY;
-    header.sizeZ = sizeZ;
-    std::ofstream file(fileName, std::ios::out | std::ios::binary);
-    if (!file) {
-        std::cout << "Cannot open file to save the model" << std::endl;
-    }
-    file.write((char*) &header, sizeof(header));
-    for (int i = 0; i < sizeX; i++) {
-        for (int j = 0; j < sizeY; j++) {
-            file.write((char*) &model[i * sizeX * sizeX + j * sizeY], sizeZ * sizeof(voxel));
-        }
-    }
-        
-}
-
 
 int main() {
     int frames = 0;
@@ -626,13 +604,7 @@ int main() {
     sf::Image image;
     image.create(imageHeight, imageWidth, sf::Color::Magenta);
 
-    bool drawCross = true;
-    sf::Texture crossTexture;
-    if (!crossTexture.loadFromFile("cross.png", sf::IntRect(0, 0, crossSize, crossSize))) {
-        fprintf(stderr, "Error loading cross.jpg\n");
-    }
 
-    // TODO потом перепишем
     double3 *moveStraight;
     cudaMallocManaged(&moveStraight, sizeof(double3));
     double3 *moveNotStraight;
@@ -704,8 +676,6 @@ int main() {
                     window.close();
                 if (event.key.code == sf::Keyboard::O)
                     saveVoxelModel(world, MAP_SIZE, MAP_SIZE, MAP_SIZE, std::string("save.dat"));
-                if (event.key.code == sf::Keyboard::V)
-                    drawCross = !drawCross;
                 if (event.key.code == sf::Keyboard::I)
                     printDebug(cam);
                 if (event.key.code == sf::Keyboard::Up) {
@@ -725,9 +695,6 @@ int main() {
         }
 
 
-        sf::Sprite crossSprite;
-        crossSprite.setTexture(crossTexture);
-        crossSprite.setPosition(imageWidth * 4 / 2. - crossSize / 2., imageHeight * 4 / 2. - crossSize / 2.);
 
         sf::Texture pixelsTexture;
         pixelsTexture.loadFromImage(image);
@@ -777,8 +744,6 @@ int main() {
 
         window.clear(sf::Color::Magenta);
         window.draw(pixels);
-        if (drawCross)
-            window.draw(crossSprite);
         window.display();
     }
     cudaFree(world);

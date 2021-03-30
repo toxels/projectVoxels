@@ -3,6 +3,10 @@ struct voxel {
     char properties; // 0b00000001 - active or not
                      // 0b00000010 - light or not
     uchar3 color;
+    voxel() {
+        properties = 0;
+        color = make_uchar3(122, 122, 122);
+    }
     __host__ __device__
     bool isActive() {
         return static_cast<bool>(properties & 0b00000001);
@@ -31,6 +35,3 @@ struct voxel {
         return static_cast<bool>(properties & 0b00000010);
     }
 };
-__global__ void iHateMyLife(voxel * thing) {
-    thing->setInactive();
-}

@@ -1,5 +1,3 @@
-#ifndef VOXELSWITHCUDA_GEOMETRY_CUH
-#define VOXELSWITHCUDA_GEOMETRY_CUH
 
 #include <iostream>
 #include <cmath>
@@ -89,11 +87,11 @@ inline uchar3 operator * (const uchar3 v, double s){
     return (make_uchar3(v.x * s, v.y * s, v.z * s));
 }
 __host__ __device__
-double myAbs(double a){
+inline double myAbs(double a){
     return a > 0.0 ? a : -1 * a;
 }
 __host__ __device__
-bool operator == (double3 v, double3 u){
+inline bool operator == (double3 v, double3 u){
     double eps = 0.0001;
     return (myAbs(v.x - u.x) < eps) && (myAbs(v.y - u.y) < eps) && (myAbs(v.z - u.z) < eps);
 }
@@ -147,7 +145,7 @@ inline double3 Reject(const double3& a, const double3& b){
 }
 
 __device__
-Matrix3D operator* (const Matrix3D& A, const Matrix3D& B) {
+inline Matrix3D operator* (const Matrix3D& A, const Matrix3D& B) {
     return (Matrix3D(A(0, 0) * B(0, 0) + A(0, 1) * B(1, 0) + A(0, 2) * B(2, 0),
                      A(0, 0) * B(0, 1) + A(0, 1) * B(1, 1) + A(0, 2) * B(2, 1),
                      A(0, 0) * B(0, 2) + A(0, 1) * B(1, 2) + A(0, 2) * B(2, 2),
@@ -159,19 +157,19 @@ Matrix3D operator* (const Matrix3D& A, const Matrix3D& B) {
                      A(2, 0) * B(0, 2) + A(2, 1) * B(1, 2) + A(2, 2) * B(2, 2)));
 }
 __host__ __device__
-double3 operator *(const Matrix3D& M, const double3& v) {
+inline double3 operator *(const Matrix3D& M, const double3& v) {
     return (make_double3(M(0, 0) * v.x + M(0, 1) * v.y + M(0, 2) * v.z,
                      M(1, 0) * v.x + M(1, 1) * v.y + M(1, 2) * v.z,
                      M(2, 0) * v.x + M(2, 1) * v.y + M(2, 2) * v.z));
 }
 __device__
-double Determinant(const Matrix3D& M){
+inline double Determinant(const Matrix3D& M){
     return (  M(0,0) * (M(1,1) * M(2,2) - M(1,2) * M(2,1))
               + M(0,1) * (M(1,2) * M(2,0) - M(1,0) * M(2,2))
               + M(0,2) * (M(1,0) * M(2,1) - M(1,1) * M(2,0))) ;
 }
 __device__
-Matrix3D Inverse(const Matrix3D& M){
+inline Matrix3D Inverse(const Matrix3D& M){
     const double3& a = M[0];
     const double3& b = M[1];
     const double3& c = M[2];
@@ -187,21 +185,21 @@ Matrix3D Inverse(const Matrix3D& M){
                      r2.x * invDet, r2.y * invDet, r2.z * invDet));
 }
 __device__
-Matrix3D MakeRotationX(double t){
+inline Matrix3D MakeRotationX(double t){
     double c = cos(t), s = sin(t);
     return (Matrix3D(1.0, 0.0, 0.0,
                      0.0,  c,  -s,
                      0.0,  s,   c));
 }
 __host__ __device__
-Matrix3D MakeRotationY(double t){
+inline Matrix3D MakeRotationY(double t){
     double c = cos(t), s = sin(t);
     return (Matrix3D( c,  0.0,  s,
                       0.0, 1.0, 0.0,
                       -s,  0.0,  c));
 }
 __host__ __device__
-Matrix3D MakeRotationZ(double t){
+inline Matrix3D MakeRotationZ(double t){
     double c = cos(t), s = sin(t);
     return (Matrix3D( c,  -s,  0.0,
                       s,   c,  0.0,
@@ -209,7 +207,7 @@ Matrix3D MakeRotationZ(double t){
 }
 // rotation through the angle t about an axis a
 __host__ __device__
-Matrix3D MakeRotation(double t, double3& a){ // a - unit vector
+inline Matrix3D MakeRotation(double t, double3& a){ // a - unit vector
     double c = cos(t), s = sin(t), d = 1.0 - c;
     double x = a.x * d, y = a.y * d, z = a.z * d;
     double axay = x * a.y;
@@ -221,7 +219,7 @@ Matrix3D MakeRotation(double t, double3& a){ // a - unit vector
 }
 // reflection through the plane perpendicular to unit vector a
 __device__
-Matrix3D MakeReflection(const double3& a) {
+inline Matrix3D MakeReflection(const double3& a) {
     double x = a.x * -2.0;
     double y = a.y * -2.0;
     double z = a.z * -2.0;
@@ -233,14 +231,14 @@ Matrix3D MakeReflection(const double3& a) {
                      axaz, ayaz, z * a.z + 1.0));
 }
 __device__
-Matrix3D MakeScale(double sx, double sy, double sz){
+inline Matrix3D MakeScale(double sx, double sy, double sz){
     return (Matrix3D( sx, 0.0, 0.0,
                       0.0,  sy, 0.0,
                       0.0, 0.0,  sz));
 }
 // a scale by a factor of s along a unit direction a
 __device__
-Matrix3D MakeScale(float s, const double3& a) {
+inline Matrix3D MakeScale(float s, const double3& a) {
     s -= 1.0;
     double x = a.x * s;
     double y = a.y * s;
@@ -277,11 +275,12 @@ double DistLineLine(const Point3D& p1, const double3& v1,
     double3 a = Cross(dp, v1);
     return (sqrt(Dot(a, a) / v12));
 }*/
-
+/*
 __device__
 double Dot(const Plane& f, const double3& v) {
     return (f.x * v.x + f.y * v.y + f.z * v.z);
 }
+*/
 /*__device__
 double Dot(const Plane& f, const Point3D& p) {
     return (f.x * p.x + f.y * p.y + f.z * p.z + f.w);
@@ -296,28 +295,3 @@ float IntersectLinePlane(const Point3D& p, const double3& v,
     }
     return false;
 }*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#endif //VOXELSWITHCUDA_GEOMETRY_CUH
