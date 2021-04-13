@@ -17,7 +17,7 @@ struct voxel {
     }
     __host__ __device__
     void setInactive() {
-        properties &= 0b11111110;
+       properties &= 0b11111110;
     }
     __host__ __device__
     void setColor(unsigned char r, unsigned char g, unsigned char b) {

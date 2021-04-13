@@ -468,6 +468,10 @@ void printDebug(Camera *cam) {
 
 
 int main() {
+    cudaDeviceProp prop;
+    cudaGetDeviceProperties(&prop, 0);
+    std::cout << "Max blocks: " << prop.maxBlocksPerMultiProcessor << std::endl;
+    std::cout << "Max threads per block: " << prop.maxThreadsPerBlock << std::endl;
     int frames = 0;
     float sumScreenRenderTime = 0.0;
 
@@ -475,19 +479,20 @@ int main() {
     Camera *cam;
     uint3 *screen;
     double3* light;
-/*
-    objModel testObjModel("deda.obj");
-    voxel* world;
+#ifdef VOXELIZE_MODEL
+    objModel testObjModel("teapot.obj");
     int testVoxelModelSize = MAP_SIZE;
     if (cudaMallocManaged(&world, testVoxelModelSize * testVoxelModelSize * testVoxelModelSize * sizeof(voxel)))
         fprintf(stderr, "cuda malloc error: testVoxelModel");
     objToVoxel(testVoxelModelSize, testObjModel, world);
-    saveVoxelModel(world, testVoxelModelSize, testVoxelModelSize, testVoxelModelSize, "test.dat");
+    saveVoxelModel(world, testVoxelModelSize, testVoxelModelSize, testVoxelModelSize, "teapot.dat");
     cudaDeviceSynchronize();
-   */ 
+    cudaFree(testObjModel.vertexes);
+    cudaFree(testObjModel.faces);
+#endif
     // TODO можно вынести в функцию загрузки/создания мира, но всё вместе, чтобы не создавать world отдельно
 #ifdef LOAD_FROM_FILE
-    std::ifstream file("test.dat", std::ios::out | std::ios::binary); // open file on "wb" mode
+    std::ifstream file("teapot.dat", std::ios::out | std::ios::binary); // open file on "wb" mode
     if (!file) {
         std::cout << "Cannot open file to load the world" << std::endl;
         return 1; // возможно стоит убрать и просто генерить мир самим
@@ -496,6 +501,7 @@ int main() {
     headerToSave header;   
     file.read((char*)&header, sizeof(header));  // read the header of save-file
     // TODO не понятно что делать с дефайнами размера мира; если их не менять, а размер мира будет другим, то возможна СМЭРТЬ
+    
     if (cudaMallocManaged(&world, header.sizeX * header.sizeY * header.sizeZ * sizeof(world[0])))
         fprintf(stderr, "cuda malloc error: world");
     
@@ -505,9 +511,10 @@ int main() {
         }
     }
 #else
+    /*
     if (cudaMallocManaged(&world, MAP_SIZE * MAP_SIZE * MAP_SIZE * sizeof(world[0])))
         fprintf(stderr, "cuda malloc error: world");
-
+        */
     unsigned char* heightMap = NULL;
     int heightMapWidth, heightMapHeight, heightMapChannels;
     LoadTGA("heightmap.tga", heightMap, heightMapWidth, heightMapHeight, heightMapChannels);

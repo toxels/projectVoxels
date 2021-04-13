@@ -1,4 +1,5 @@
 #include "ray.cuh"
+__device__
 bool RayIntersectsTriangle(double3& rayOrigin,
     double3& rayVector,
     double3& triangleA, double3& triangleB, double3& triangleC,

@@ -7,7 +7,7 @@ public:
     double3 source;
     double3 direction;
 };
-bool RayIntersectsTriangle(double3& rayOrigin,
+__device__ bool RayIntersectsTriangle(double3& rayOrigin,
     double3& rayVector,
     double3& triangleA, double3& triangleB, double3& triangleC,
     double3& outIntersectionPoint);
