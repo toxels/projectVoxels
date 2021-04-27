@@ -1,4 +1,4 @@
-#include <iostream>
+п»ї#include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -36,7 +36,7 @@ objModel::objModel(std::string fileName) {
 }
 __global__ void objToVoxelHelper(int voxelModelSize, double3* vertexes, int numVertexes, int3* faces, int numFaces, voxel* voxelModel);
 /*
-* voxelModelSize - желаемый размер кубической воксельной модели на выходе
+* voxelModelSize - Р¶РµР»Р°РµРјС‹Р№ СЂР°Р·РјРµСЂ РєСѓР±РёС‡РµСЃРєРѕР№ РІРѕРєСЃРµР»СЊРЅРѕР№ РјРѕРґРµР»Рё РЅР° РІС‹С…РѕРґРµ
 */
 __host__
 voxel* objToVoxel(int voxelModelSize, objModel& objModel, voxel* voxelModel) {
@@ -50,13 +50,13 @@ voxel* objToVoxel(int voxelModelSize, objModel& objModel, voxel* voxelModel) {
         maxCoordinates.y = std::max(maxCoordinates.y, objModel.tmpVertexes[i].y);
         maxCoordinates.z = std::max(maxCoordinates.z, objModel.tmpVertexes[i].z);
     }
-    // вылезаем из отрицательных координат
+    // РІС‹Р»РµР·Р°РµРј РёР· РѕС‚СЂРёС†Р°С‚РµР»СЊРЅС‹С… РєРѕРѕСЂРґРёРЅР°С‚
     for(int i = 0 ; i < objModel.numVertexes ; i++){
         objModel.tmpVertexes[i] = objModel.tmpVertexes[i] - minCoordinates + make_double3(eps, eps, eps);
     }
-    // обновляем максимум, не проходя заново по массиву
+    // РѕР±РЅРѕРІР»СЏРµРј РјР°РєСЃРёРјСѓРј, РЅРµ РїСЂРѕС…РѕРґСЏ Р·Р°РЅРѕРІРѕ РїРѕ РјР°СЃСЃРёРІСѓ
     maxCoordinates = maxCoordinates - minCoordinates + make_double3(eps, eps, eps);
-    // находим самый-самый большой максимум координата
+    // РЅР°С…РѕРґРёРј СЃР°РјС‹Р№-СЃР°РјС‹Р№ Р±РѕР»СЊС€РѕР№ РјР°РєСЃРёРјСѓРј РєРѕРѕСЂРґРёРЅР°С‚Р°
     double maxCoordinate = std::max(std::max(maxCoordinates.x, maxCoordinates.y), maxCoordinates.z);
     double scale = BOX_SIZE * voxelModelSize / maxCoordinate;
     for(int i = 0 ; i < objModel.numVertexes ; i++){
@@ -86,8 +86,8 @@ voxel* objToVoxel(int voxelModelSize, objModel& objModel, voxel* voxelModel) {
     objToVoxelHelper<<<Dg, Db>>>(voxelModelSize, objModel.vertexes, objModel.numVertexes, objModel.faces, objModel.numFaces, voxelModel);
 	std::cout << "After objVoxelHelper: " << cudaGetLastError() << std::endl;
 	cudaDeviceSynchronize();
-	// TODO Обрезать лишние слои воксельной модели (слои вокселей, где все воксели неактивны)
-	// для этого пригодится новая структура voxelModel
+	// TODO РћР±СЂРµР·Р°С‚СЊ Р»РёС€РЅРёРµ СЃР»РѕРё РІРѕРєСЃРµР»СЊРЅРѕР№ РјРѕРґРµР»Рё (СЃР»РѕРё РІРѕРєСЃРµР»РµР№, РіРґРµ РІСЃРµ РІРѕРєСЃРµР»Рё РЅРµР°РєС‚РёРІРЅС‹)
+	// РґР»СЏ СЌС‚РѕРіРѕ РїСЂРёРіРѕРґРёС‚СЃСЏ РЅРѕРІР°СЏ СЃС‚СЂСѓРєС‚СѓСЂР° voxelModel
 	return voxelModel;
 }
 __global__
@@ -98,19 +98,19 @@ void objToVoxelHelper(int voxelModelSize, double3* vertexes, int numVertexes, in
     
 	if (i >= voxelModelSize || j >= voxelModelSize || k >= voxelModelSize)
 		return;
-	// сидим в частице
-	// считаем координаты ее центра
+	// СЃРёРґРёРј РІ С‡Р°СЃС‚РёС†Рµ
+	// СЃС‡РёС‚Р°РµРј РєРѕРѕСЂРґРёРЅР°С‚С‹ РµРµ С†РµРЅС‚СЂР°
 	double3 currentVoxelCenterCoordinates = make_double3(
 		i * BOX_SIZE + (double)BOX_SIZE / 2,
 		j * BOX_SIZE + (double)BOX_SIZE / 2,
 		k * BOX_SIZE + (double)BOX_SIZE / 2);
 
-	// считаем противоположно направленные произвольные лучи, проходящие через центр текущей частицы
+	// СЃС‡РёС‚Р°РµРј РїСЂРѕС‚РёРІРѕРїРѕР»РѕР¶РЅРѕ РЅР°РїСЂР°РІР»РµРЅРЅС‹Рµ РїСЂРѕРёР·РІРѕР»СЊРЅС‹Рµ Р»СѓС‡Рё, РїСЂРѕС…РѕРґСЏС‰РёРµ С‡РµСЂРµР· С†РµРЅС‚СЂ С‚РµРєСѓС‰РµР№ С‡Р°СЃС‚РёС†С‹
 	Ray arbitraryRay1{ currentVoxelCenterCoordinates, make_double3(1.0, 0.0, 0.0) };
 	Ray arbitraryRay2{ currentVoxelCenterCoordinates, make_double3(-1.0, 0.0, 0.0) };
 	
 	int counterRay1 = 0, counterRay2 = 0;
-	// проходим по всем =) треугольникам и проверяем пересечения
+	// РїСЂРѕС…РѕРґРёРј РїРѕ РІСЃРµРј =) С‚СЂРµСѓРіРѕР»СЊРЅРёРєР°Рј Рё РїСЂРѕРІРµСЂСЏРµРј РїРµСЂРµСЃРµС‡РµРЅРёСЏ
 	for (int t = 0; t < numFaces; t++) {
 		double3 unused;
 		if (RayIntersectsTriangle(arbitraryRay1.source, arbitraryRay1.direction,
