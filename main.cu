@@ -669,7 +669,7 @@ int main() {
                 if (event.key.code == sf::Keyboard::Escape)
                     window.close();
                 if (event.key.code == sf::Keyboard::O)
-                    saveVoxelModel(world, MAP_SIZE, MAP_SIZE, MAP_SIZE, std::string("save.dat"));
+                    saveVoxelModel(world, MAP_SIZE, MAP_SIZE, MAP_SIZE, std::string("save2.dat"));
                 if (event.key.code == sf::Keyboard::I)
                     printDebug(cam);
                 if (event.key.code == sf::Keyboard::Up) {

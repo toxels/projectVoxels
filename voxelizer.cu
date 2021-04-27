@@ -86,6 +86,8 @@ voxel* objToVoxel(int voxelModelSize, objModel& objModel, voxel* voxelModel) {
     objToVoxelHelper<<<Dg, Db>>>(voxelModelSize, objModel.vertexes, objModel.numVertexes, objModel.faces, objModel.numFaces, voxelModel);
 	std::cout << "After objVoxelHelper: " << cudaGetLastError() << std::endl;
 	cudaDeviceSynchronize();
+	// TODO Обрезать лишние слои воксельной модели (слои вокселей, где все воксели неактивны)
+	// для этого пригодится новая структура voxelModel
 	return voxelModel;
 }
 __global__

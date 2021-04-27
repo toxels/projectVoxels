@@ -16,3 +16,4 @@
 #define MAX_FRAMES (1000)
 //#define DEBUG
 #define LOAD_FROM_FILE
+//#define VOXELIZE_MODEL
