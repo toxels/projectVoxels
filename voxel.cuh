@@ -35,3 +35,23 @@ struct voxel {
         return static_cast<bool>(properties & 0b00000010);
     }
 };
+
+
+struct voxelModel
+{
+    int sizeX;
+    int sizeY;
+    int sizeZ;
+    voxel* voxelArray;
+
+	voxelModel(){}
+	
+    voxelModel(int size_x, int size_y, int size_z, voxel* model)
+    {
+        sizeX = size_x;
+        sizeY = size_y;
+        sizeZ = size_z;
+        voxelArray = model;
+    }
+	
+};
